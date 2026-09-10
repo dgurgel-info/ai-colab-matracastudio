@@ -99,10 +99,11 @@ flowchart LR
 
 ```text
 matracastudio/
-├── Matraca_Studio.ipynb      # Notebook completo com backend e interface Gradio
-├── README.md                 # Documentação oficial do projeto
-├── LICENSE                   # Licença MIT
-└── .gitignore                # Arquivos e extensões ignoradas no versionamento
+├── Matraca_Studio.ipynb         # Notebook completo com backend e interface Gradio
+├── higgs_audio_v2_tokenizer.py  # Ponte acústica de compatibilidade do OmniVoice com transformers 4.57.3
+├── README.md                    # Documentação oficial do projeto
+├── LICENSE                      # Licença MIT
+└── .gitignore                   # Arquivos e extensões ignoradas no versionamento
 ```
 
 ---
