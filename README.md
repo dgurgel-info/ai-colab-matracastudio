@@ -1,6 +1,6 @@
 # 🎙️ Matraca Studio — Dublador & Clonador de Voz
 
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/danieldemoraisgurgel/matracastudio/blob/main/Matraca_Studio.ipynb)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio.ipynb)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)
 ![Framework](https://img.shields.io/badge/Framework-OmniVoice%20%7C%20Whisper-brightgreen.svg)
