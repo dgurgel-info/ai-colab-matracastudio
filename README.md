@@ -14,20 +14,50 @@ O **Matraca Studio** é uma suíte completa de localização e dublagem de áudi
 
 ## ✨ Principais Funcionalidades
 
-- 🎙️ **Entrada Otimizada de Áudio**: Suporte exclusivo para áudios (`.wav`, `.mp3`, `.m4a`, `.ogg`, `.flac`) ou gravação direta pelo microfone.
-- 🗣️ **Reconhecimento Preciso e Transcrição Editável**: Transcrição automática com Whisper e detecção do idioma de origem. Permite **revisar e ajustar palavras, pontuações ou nomes próprios** antes de iniciar a dublagem.
-- 🧠 **Seleção de Motores de IA de Ponta**:
-  - ⚡ **Qwen3-TTS 1.7B Base** (*Alibaba Cloud*): Modelo autorregressivo de 1.7B parâmetros com altíssima expressividade, entonação realista e prosódia humana.
-  - 🎙️ **OmniVoice** (*k2-fsa*): Modelo leve e rápido de difusão acústica.
-- 🌍 **Dublagem Multi-Idioma Dinâmica**: Permite selecionar múltiplos idiomas de destino. A interface adapta as opções automaticamente de acordo com o modelo selecionado (no Qwen3-TTS, o Árabe não fica selecionável por não possuir suporte nativo; no OmniVoice, todos os 10 idiomas estão liberados).
-- ⏱️ **Linha do Tempo Inteligente**: Preservação automática de introdução e encerramento originais com ajuste fino de tempo (*time-stretching* suave).
-- 🎬 **Clonagem Guiada por Legendas SRT**: Importe arquivos `.SRT` com marcação de tempo para que a fala sintetizada respeite rigorosamente as janelas temporais e as pausas entre cada fala.
-- 🌓 **Modo Claro / Escuro (Dark Mode)**: Alternância de tema com persistência local no navegador.
-- 🧹 **Gestão Estrita de VRAM e Processamento 100% Sequencial**:
-  - **Apenas 1 modelo ativo por vez na GPU**: Ao alternar entre Qwen3-TTS e OmniVoice, o modelo anterior é descarregado da memória antes do novo carregar.
-  - **Processamento estritamente sequencial (1 idioma por vez)**: Nunca executa gerações simultâneas, realizando limpeza contínua de cache a cada bloco sintetizado e após cada idioma.
-- 📥 **Downloads Individuais e Pacote ZIP**: Players embutidos de áudio com download imediato dos arquivos gerados (WAVs). Ao final, o Passo 5 reúne todos os WAVs salvos em `./outputs` no arquivo `audios_dublados.zip` e inicia o download no Colab.
-- ✍️ **Aba de Clonagem Livre (TTS & SRT)**: Sintetize qualquer texto digitado ou arquivos de legenda com a sua voz clonada escolhendo entre Qwen3-TTS 1.7B e OmniVoice.
+- 🎙️ **Entrada otimizada de áudio**
+
+  Aceita arquivos `.wav`, `.mp3`, `.m4a`, `.ogg` e `.flac`, além de gravação direta pelo microfone.
+
+- 🗣️ **Reconhecimento preciso e transcrição editável**
+
+  Transcreve automaticamente com Whisper, detecta o idioma de origem e permite **revisar palavras, pontuação e nomes próprios** antes da dublagem.
+
+- 🧠 **Dois motores de IA**
+
+  - ⚡ **Qwen3-TTS 1.7B Base** (*Alibaba Cloud*): modelo autorregressivo com alta expressividade, entonação realista e prosódia humana.
+  - 🎙️ **OmniVoice** (*k2-fsa*): modelo leve e rápido de difusão acústica.
+
+- 🌍 **Dublagem para vários idiomas**
+
+  Permite selecionar múltiplos idiomas de destino. As opções são adaptadas automaticamente ao modelo escolhido:
+
+  - **Qwen3-TTS:** nove idiomas; Árabe indisponível por falta de suporte nativo.
+  - **OmniVoice:** dez idiomas, incluindo Árabe.
+
+- ⏱️ **Linha do tempo inteligente**
+
+  Preserva automaticamente a introdução e o encerramento originais, com ajuste suave de duração (*time-stretching*).
+
+- 🎬 **Clonagem guiada por legendas SRT**
+
+  Importa arquivos `.SRT` com marcações de tempo para respeitar as janelas temporais e as pausas entre as falas.
+
+- 🌓 **Modo claro e escuro**
+
+  Alterna o tema da interface e mantém a preferência salva no navegador.
+
+- 🧹 **Gestão de VRAM e processamento sequencial**
+
+  - **Um modelo por vez na GPU:** ao trocar entre Qwen3-TTS e OmniVoice, o modelo anterior é descarregado da memória.
+  - **Um idioma por vez:** as gerações são executadas sequencialmente, com limpeza do cache após cada bloco e idioma.
+
+- 📥 **Downloads individuais e pacote ZIP**
+
+  Disponibiliza prévias e downloads imediatos dos arquivos WAV. No Passo 5, todos os áudios de `./outputs` são reunidos em `audios_dublados.zip` para download no Colab.
+
+- ✍️ **Clonagem livre com texto ou SRT**
+
+  Sintetiza textos digitados ou arquivos de legenda com a voz clonada, usando Qwen3-TTS 1.7B ou OmniVoice.
 
 ---
 
