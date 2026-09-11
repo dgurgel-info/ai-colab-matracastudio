@@ -42,10 +42,6 @@ O **Matraca Studio** é uma suíte completa de localização e dublagem de áudi
 
   Importa arquivos `.SRT` com marcações de tempo para respeitar as janelas temporais e as pausas entre as falas.
 
-- 🌓 **Modo claro e escuro**
-
-  Alterna o tema da interface e mantém a preferência salva no navegador.
-
 - 🧹 **Gestão de VRAM e processamento sequencial**
 
   - **Um modelo por vez na GPU:** ao trocar entre Qwen3-TTS e OmniVoice, o modelo anterior é descarregado da memória.
