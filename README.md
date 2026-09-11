@@ -26,7 +26,7 @@ O **Matraca Studio** é uma suíte completa de localização e dublagem de áudi
 - 🧹 **Gestão Estrita de VRAM e Processamento 100% Sequencial**:
   - **Apenas 1 modelo ativo por vez na GPU**: Ao alternar entre Qwen3-TTS e OmniVoice, o modelo anterior é descarregado da memória antes do novo carregar.
   - **Processamento estritamente sequencial (1 idioma por vez)**: Nunca executa gerações simultâneas, realizando limpeza contínua de cache a cada bloco sintetizado e após cada idioma.
-- 📥 **Download Individual e Prévias em Tempo Real**: Players embutidos de áudio com download imediato dos arquivos gerados (WAVs).
+- 📥 **Downloads Individuais e Pacote ZIP**: Players embutidos de áudio com download imediato dos arquivos gerados (WAVs). Ao final, o Passo 5 reúne todos os WAVs salvos em `./outputs` no arquivo `audios_dublados.zip` e inicia o download no Colab.
 - ✍️ **Aba de Clonagem Livre (TTS & SRT)**: Sintetize qualquer texto digitado ou arquivos de legenda com a sua voz clonada escolhendo entre Qwen3-TTS 1.7B e OmniVoice.
 
 ---
@@ -82,12 +82,14 @@ flowchart LR
    - **Passo 2:** Carrega o Whisper e inicializa o motor de TTS na VRAM da GPU (1 modelo por vez na memória).
    - **Passo 3:** Compila o motor de sincronização temporal, suporte a SRT, tradução robusta e síntese sequencial.
    - **Passo 4:** Inicia a aplicação Gradio e gera o link público compartilhável (`https://...gradio.live`).
+   - **Passo 5:** Reúne todos os áudios WAV salvos em `./outputs`, gera o pacote `audios_dublados.zip` e inicia o download no Colab.
 4. **Utilizando a Interface:**
    - Envie seu arquivo de áudio (WAV, MP3, M4A, etc.) ou grave pelo microfone.
    - Escolha o modelo de IA desejado (**Qwen3-TTS 1.7B** para alta expressividade ou **OmniVoice** para leveza e suporte ao Árabe).
    - Clique em **1. Apenas Transcrever** (opcional, para revisar o texto) ou vá direto em **2. Dublar Áudio 🚀**.
    - Marque os idiomas de destino desejados (**Inglês, Espanhol**, etc.).
    - Acompanhe a transição limpa de progresso entre idiomas e faça o download direto dos áudios dublados!
+   - Para baixar todos os resultados de uma vez, execute o **Passo 5** e obtenha o pacote ZIP completo.
    - Na aba **🎙️ Clonagem Livre & Sincronização SRT**, importe arquivos `.srt` para gerar falas com sincronia de legendas exata.
 
 ---
