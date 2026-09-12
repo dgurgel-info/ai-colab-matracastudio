@@ -49,7 +49,7 @@ O **Matraca Studio** é uma suíte completa de localização e dublagem de áudi
 
 - 📥 **Downloads individuais e pacote ZIP**
 
-  Disponibiliza prévias e downloads imediatos dos arquivos WAV. No Passo 5, todos os áudios de `./outputs` são reunidos em `audios_dublados.zip` para download no Colab.
+  Disponibiliza download individual e direto de cada arquivo WAV gerado. No Passo 5, todos os áudios de `./outputs` são reunidos em `audios_dublados.zip` para download em lote no Colab.
 
 - ✍️ **Clonagem livre com texto ou SRT**
 
