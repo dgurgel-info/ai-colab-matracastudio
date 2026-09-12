@@ -55,6 +55,14 @@ O **Matraca Studio** é uma suíte completa de localização e dublagem de áudi
 
   Sintetiza textos digitados ou arquivos de legenda com a voz clonada, usando Qwen3-TTS 1.7B ou OmniVoice.
 
+- 🛡️ **Proteção Anti-Timeout de Sessão (Colab & Gradio)**
+
+  Sentinela automático com batimento contínuo e heartbeat de áudio silencioso para prevenir desconexão por inatividade do Google Colab e impedir que o navegador congele ou suspenda a aba em segundo plano.
+
+- 🔄 **Gerenciador de Jobs Persistente (Resistente a F5 e Quedas de Rede)**
+
+  Processamento desacoplado em background threads com persistência contínua de status em disco (`./outputs/job_state.json`). Se a página sofrer recarregamento (F5) ou oscilação de rede, a síntese continua normalmente e a interface reconecta automaticamente exibindo logs em tempo real, status do job e arquivos gerados.
+
 ---
 
 ## 🌐 Idiomas Suportados
