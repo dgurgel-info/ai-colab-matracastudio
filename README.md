@@ -53,6 +53,12 @@ O aplicativo mantém somente **um motor de TTS na GPU por vez**. Ao trocar o mod
 
 ## Como executar no Google Colab
 
+Abra diretamente a versão adequada à sua GPU:
+
+**GPU T4:** [![Abrir Matraca Studio T4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_T4.ipynb)
+
+**GPU L4:** [![Abrir Matraca Studio L4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_L4.ipynb)
+
 ### Versão T4
 
 1. Abra [Matraca_Studio_T4.ipynb no Colab](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_T4.ipynb).
