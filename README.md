@@ -53,6 +53,19 @@ O aplicativo mantém somente **um motor de TTS na GPU por vez**. Ao trocar o mod
 
 ## Como executar no Google Colab
 
+### Cache recuperável no Google Drive (opcional)
+
+Para baixar manualmente as dependências, os pacotes APT, os pesos de todos os modelos e os arquivos auxiliares em um diretório do Drive, execute o script após o Passo 1:
+
+```python
+!git clone https://github.com/dgurgel-info/ai-colab-matracastudio.git
+!python ai-colab-matracastudio/scripts/download_matraca_offline_cache.py \
+  /content/drive/MyDrive/MatracaStudioCache
+```
+
+O processo cria um `manifest.json` com hashes dos arquivos. Os pesos são mantidos no Drive apenas como cópia de segurança; para melhor desempenho, copie o modelo escolhido para `/content` antes de carregá-lo.
+O runtime-base do Colab (CUDA, driver NVIDIA, `torch` e `torchaudio`) continua sendo fornecido pela imagem da GPU; não é seguro reutilizar wheels desses componentes entre imagens/versões diferentes.
+
 Abra diretamente a versão adequada à sua GPU:
 
 ### Versão T4
