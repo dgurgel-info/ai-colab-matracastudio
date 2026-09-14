@@ -55,13 +55,9 @@ O aplicativo mantém somente **um motor de TTS na GPU por vez**. Ao trocar o mod
 
 Abra diretamente a versão adequada à sua GPU:
 
-**GPU T4:** [![Abrir Matraca Studio T4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_T4.ipynb)
-
-**GPU L4:** [![Abrir Matraca Studio L4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_L4.ipynb)
-
 ### Versão T4
 
-1. Abra [Matraca_Studio_T4.ipynb no Colab](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_T4.ipynb).
+1. Abra [![Abrir Matraca Studio T4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_T4.ipynb)
 2. Em **Ambiente de execução → Alterar tipo de ambiente de execução**, selecione **T4 GPU**.
 3. Execute as células do **Passo 1** ao **Passo 4** em ordem.
 4. Abra o endereço `gradio.live` exibido ao final do Passo 4.
@@ -69,7 +65,7 @@ Abra diretamente a versão adequada à sua GPU:
 
 ### Versão L4 — recomendada
 
-1. Abra [Matraca_Studio_L4.ipynb no Colab](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_L4.ipynb).
+1. Abra [![Abrir Matraca Studio L4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_L4.ipynb)
 2. Em **Ambiente de execução → Alterar tipo de ambiente de execução**, selecione **L4 GPU**.
 3. Execute as células do **Passo 1** ao **Passo 4** em ordem. A primeira carga baixa os pesos do VoxCPM2 e pode levar alguns minutos.
 4. Na interface, mantenha **VoxCPM2 2B** para a melhor qualidade ou selecione Qwen3-TTS/OmniVoice quando necessário.
