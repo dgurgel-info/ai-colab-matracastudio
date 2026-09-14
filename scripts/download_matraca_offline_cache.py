@@ -2,7 +2,7 @@
 """Baixa o cache recuperável do Matraca Studio para disco local ou Google Drive.
 
 Uso no Colab, após montar o Drive:
-  !python download_matraca_offline_cache.py /content/drive/MyDrive/MatracaStudioCache
+  /content# python download_matraca_offline_cache.py /content/drive/MyDrive/MatracaStudioCache
 
 O script baixa artefatos, mas não instala os pacotes nem altera os modelos ativos.
 Execute após o Passo 1 do notebook para que huggingface_hub e whisper estejam disponíveis.
