@@ -16,7 +16,7 @@ O **Matraca Studio** transcreve, traduz, dubla e clona vozes a partir de áudio 
 
 ### Por que usar a L4?
 
-A versão L4 carrega o **VoxCPM2 2B** como motor padrão, com saída nativa em **48 kHz**, clonagem Hi-Fi e suporte a 30 idiomas. A GPU L4 tem 24 GB de VRAM, oferecendo mais margem para o modelo de 2B, Whisper e processamento de áudio do que a T4. Isso permite síntese de maior qualidade e, na prática, geração mais rápida que a T4 para o mesmo trabalho.
+A versão L4 carrega o **VoxCPM2 2B** como motor padrão, com saída nativa em **48 kHz**, clonagem Hi-Fi e suporte a 11 idiomas. A GPU L4 tem 24 GB de VRAM, oferecendo mais margem para o modelo de 2B, Whisper e processamento de áudio do que a T4. Isso permite síntese de maior qualidade e, na prática, geração mais rápida que a T4 para o mesmo trabalho.
 
 Na dublagem multilíngue, o VoxCPM2 usa orientação de sotaque nativo por idioma — por exemplo, *General American English* para inglês — para evitar sotaques estrangeiros inadequados. Para clonagem livre, o modo Hi-Fi combina áudio de referência e transcrição para preservar timbre, ritmo, emoção e prosódia.
 
@@ -26,7 +26,7 @@ Na dublagem multilíngue, o VoxCPM2 usa orientação de sotaque nativo por idiom
 
 | Modelo | Disponível em | Destaques |
 | :--- | :--- | :--- |
-| **VoxCPM2 2B** | L4 | Padrão L4; 48 kHz, clonagem Hi-Fi, controle de estilo e 30 idiomas. |
+| **VoxCPM2 2B** | L4 | Padrão L4; 48 kHz, clonagem Hi-Fi, controle de estilo e 11 idiomas. |
 | **Qwen3-TTS 1.7B** | T4 e L4 | Alta expressividade e clonagem para 9 idiomas. |
 | **OmniVoice** | T4 e L4 | Alternativa leve, rápida e com suporte a Árabe. |
 
