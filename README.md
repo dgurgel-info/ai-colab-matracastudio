@@ -1,7 +1,4 @@
-# 🎙️ Matraca Studio — Dublagem e Clonagem de Voz com IA
-
-[![Abrir versão T4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_T4.ipynb)
-[![Abrir versão L4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_L4.ipynb)
+# 🎙️ Matraca Studio — Dublagem e Clonagem de Voz
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)
 ![Modelos](https://img.shields.io/badge/Modelos-VoxCPM2%20%7C%20Qwen3--TTS%20%7C%20OmniVoice-brightgreen.svg)
