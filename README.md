@@ -36,17 +36,11 @@ O aplicativo mantém somente **um motor de TTS na GPU por vez**. Ao trocar o mod
 
 Nos dois notebooks, o Qwen3-TTS usa a referência de áudio **com sua transcrição** (modo ICL) e reutiliza o mesmo prompt vocal em todos os blocos da geração, inclusive em inglês, francês e espanhol. O idioma de destino orienta a pronúncia; não são injetadas instruções de sotaque por APIs privadas do modelo. Sem transcrição ou com áudio inválido, o processo informa o erro em vez de continuar com um clone de menor fidelidade.
 
-A revisão **qualidade v2** aparece no log da geração. Ela usa blocos de até 240 caracteres, contexto de texto completo e a mesma semente inicial entre blocos. O subgerador acústico usa decodificação sem amostragem. Na L4, o Qwen usa BF16 quando suportado; na T4, mantém FP16.
-
-Antes de aceitar cada bloco, o encoder de locutor do próprio Qwen compara a voz gerada com a identidade da referência. A comparação inclui o bloco inteiro e janelas de 3 segundos sobrepostas, incluindo o final do bloco. A triagem exige similaridade cosseno mínima de 0,60 no bloco e 0,50 nas janelas. Blocos reprovados são regenerados até três vezes com a mesma referência, outras sementes e menor temperatura. Se todas as tentativas falharem, a geração para com um erro explícito, sem entregar o bloco reprovado. Os valores de similaridade e o número de tentativas aparecem no log.
-
-Esses limiares são heurísticos e ainda não foram calibrados com a voz do usuário no Colab. Eles podem rejeitar uma fala válida e também deixar passar um desvio perceptivo. Não medem sotaque, fluência ou pronúncia nativa, nem garantem identidade vocal. A validação automática complementa a avaliação auditiva.
-
-A referência recebe limpeza leve de ruído estacionário. Amostras maiores que 15 segundos são limitadas a um recorte de 12 segundos e retranscritas nesse recorte; são necessários ao menos 3 segundos de fala. Os blocos gerados também recebem limpeza FFT limitada a 6 dB, sem aumentar o volume, e retirada de bordas de baixa energia com margem de 40 ms. As junções têm rampas de 25 ms e pausas de 80 ms, sem sobrepor palavras. A sincronização prefere o filtro Rubber Band com pitch preservado; se indisponível, informa o uso de `atempo`. O processamento evita amplificar cada bloco até o pico máximo, inclusive após sincronização e na montagem SRT.
+A síntese usa blocos de até 180 caracteres, contexto de texto completo por bloco e amostragem menos aleatória. Na L4, o Qwen usa BF16 quando suportado; na T4, mantém FP16. As junções têm rampas de 10 ms e pausas de 80 ms, sem sobrepor palavras. O processamento evita amplificar cada bloco até o pico máximo, inclusive após sincronização e na montagem SRT, para não destacar ruído nem criar saltos de volume.
 
 Prefira uma referência de uma única pessoa, de 5 a 15 segundos, sem música, reverberação ou chiado, e com transcrição fiel. O idioma selecionado busca fala natural no idioma de destino, mas a referência também pode influenciar o sotaque: preservar o timbre e eliminar totalmente o sotaque não é garantido pelo modelo. As mudanças reduzem fontes de instabilidade; a fidelidade e a fluência precisam ser conferidas ouvindo a geração no Colab.
 
-As regressões podem ser executadas sem pesos de IA com `python -m unittest discover -s tests -v` (requer `numpy` e `torch`). Para executar também os testes DSP com FFmpeg real, instale `scipy` e `imageio-ffmpeg`. Os testes de identidade usam um encoder simulado para verificar rejeição e regeneração; não constituem avaliação de locutor humano nem pronúncia nativa.
+As regressões de código e junções podem ser executadas sem pesos de IA com `python -m unittest discover -s tests -v` (requer `numpy` e `torch`). Esses testes não medem similaridade de locutor nem pronúncia nativa.
 
 ## Funcionalidades
 
