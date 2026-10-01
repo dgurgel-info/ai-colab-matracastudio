@@ -167,7 +167,17 @@ não fazem parte do roteiro. Portanto, esse ensaio foi descartado, sem
 aumentar o limite de caracteres nos notebooks ou aplicar a alteração à main.
 A amostra curta aprovada não demonstrava estabilidade para esse texto longo.
 
-Está em avaliação separada o mesmo roteiro com `non_streaming_mode=True`,
+O mesmo roteiro foi gerado separadamente com `non_streaming_mode=True`,
 que, na implementação oficial, fornece o texto completo antes da fala.
-Esse teste conserva os demais parâmetros e a referência; ainda não valida
-uma correção nem as versões longas em inglês/francês.
+Mantendo os demais parâmetros e a referência, a saída teve 95,8400 segundos,
+353,42 segundos de processamento e pico de 5,06 GB CUDA. O Whisper reconheceu
+o roteiro até a última frase, sem o ciclo de repetição do primeiro teste,
+com ambiguidades em nomes próprios e siglas. A versão sincronizada tem
+exatamente 120 segundos, sem emendas internas; a fala acaba aproximadamente
+em 116,81 segundos e o restante é silêncio complementar. O pico final é
+0,7066 e todas as amostras são finitas.
+
+Essa amostra foi entregue para avaliação auditiva. O modo de síntese dos
+notebooks não foi alterado: conteúdo completo e duração correta ainda não
+comprovam fidelidade vocal ou ausência de chiado. A dublagem completa,
+francês/inglês e a GPU L4 continuam pendentes de validação dessa abordagem.
