@@ -36,6 +36,7 @@ class FakeModel:
     def __init__(self, raw=None, sr=24000):
         self.prompts = []
         self.calls = []
+        self.seeds = []
         self.prompt = [object()]
         self.raw = raw
         self.sr = sr
@@ -46,6 +47,7 @@ class FakeModel:
 
     def generate_voice_clone(self, **kwargs):
         self.calls.append(kwargs)
+        self.seeds.append(torch.initial_seed())
         if self.raw is not None:
             return [self.raw], self.sr
         amplitude = 0.12 if len(self.calls) % 2 else 0.03
@@ -85,6 +87,7 @@ class QwenNotebookTests(unittest.TestCase):
                     self.assertEqual(len(model.prompts), 1)
                     self.assertFalse(model.prompts[0]['x_vector_only_mode'])
                     self.assertGreater(len(model.calls), 1)
+                    self.assertEqual(model.seeds, [42] * len(model.calls))
                     for call in model.calls:
                         self.assertIs(call['voice_clone_prompt'], model.prompt)
                         self.assertEqual(call['language'], language)
