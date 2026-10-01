@@ -32,6 +32,16 @@ Na dublagem multilíngue, o VoxCPM2 usa orientação de sotaque nativo por idiom
 
 O aplicativo mantém somente **um motor de TTS na GPU por vez**. Ao trocar o modelo, o anterior é removido da VRAM antes do próximo carregamento.
 
+### Fidelidade e pronúncia com Qwen3-TTS
+
+Nos dois notebooks, o Qwen3-TTS usa a referência de áudio **com sua transcrição** (modo ICL) e reutiliza o mesmo prompt vocal em todos os blocos da geração, inclusive em inglês, francês e espanhol. O idioma de destino orienta a pronúncia; não são injetadas instruções de sotaque por APIs privadas do modelo. Sem transcrição ou com áudio inválido, o processo informa o erro em vez de continuar com um clone de menor fidelidade.
+
+A síntese usa blocos de até 180 caracteres, contexto de texto completo por bloco e amostragem menos aleatória. Na L4, o Qwen usa BF16 quando suportado; na T4, mantém FP16. As junções têm rampas de 10 ms e pausas de 80 ms, sem sobrepor palavras. O processamento evita amplificar cada bloco até o pico máximo, inclusive após sincronização e na montagem SRT, para não destacar ruído nem criar saltos de volume.
+
+Prefira uma referência de uma única pessoa, de 5 a 15 segundos, sem música, reverberação ou chiado, e com transcrição fiel. O idioma selecionado busca fala natural no idioma de destino, mas a referência também pode influenciar o sotaque: preservar o timbre e eliminar totalmente o sotaque não é garantido pelo modelo. As mudanças reduzem fontes de instabilidade; a fidelidade e a fluência precisam ser conferidas ouvindo a geração no Colab.
+
+As regressões de código e junções podem ser executadas sem pesos de IA com `python -m unittest discover -s tests -v` (requer `numpy` e `torch`). Esses testes não medem similaridade de locutor nem pronúncia nativa.
+
 ## Funcionalidades
 
 - Entrada por arquivo (`.wav`, `.mp3`, `.m4a`, `.ogg`, `.flac`) ou microfone.
