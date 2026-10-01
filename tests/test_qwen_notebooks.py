@@ -27,7 +27,7 @@ def notebook_namespace(label):
     nodes += [n for n in parsed.body if isinstance(n, ast.Assign)
               and any(isinstance(t, ast.Name) and t.id == 'QWEN_LANGUAGES' for t in n.targets)]
     namespace = dict(torch=torch, np=np, re=re, gc=gc, time=time,
-                     is_stop_requested=lambda: False, print=lambda *a, **k: None)
+                     trim_qwen_nonspeech_edges=lambda t: t, is_stop_requested=lambda: False, print=lambda *a, **k: None)
     exec(compile(ast.Module(body=nodes, type_ignores=[]), label, 'exec'), namespace)
     return nb, namespace
 
@@ -89,7 +89,9 @@ class QwenNotebookTests(unittest.TestCase):
                         self.assertIs(call['voice_clone_prompt'], model.prompt)
                         self.assertEqual(call['language'], language)
                         self.assertNotIn('instruct_ids', call)
-                        self.assertTrue(call['non_streaming_mode'])
+                        self.assertFalse(call['non_streaming_mode'])
+                        self.assertTrue(call['subtalker_dosample'])
+                        self.assertEqual(call['subtalker_temperature'], 0.9)
                     blocks = [t for event, _, t in events if event == 'chunk_done']
                     final = events[-1][2]
                     self.assertEqual(final.shape[-1], sum(t.shape[-1] for t in blocks) + 1920 * (len(blocks)-1))
