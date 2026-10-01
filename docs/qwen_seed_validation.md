@@ -34,6 +34,12 @@ As sementes anteriores não falharam em todas as amostras: a semente 44 teve
 0,685 em francês e 0,722 em inglês. A mudança elimina uma variação que
 reproduziu a falha espanhola; não constitui um detector universal de troca de voz.
 
+Também foi montada uma amostra dos primeiros cinco blocos espanhóis com os
+helpers reais do notebook: 34,64 segundos antes da sincronização e 40,74
+segundos com `atempo=0.85`, como na execução relatada. Os blocos 2 e 5,
+também com semente 42, tiveram cossenos 0,727 e 0,540 respectivamente.
+A variação restante reforça a necessidade de avaliação auditiva.
+
 No início do bloco 3, a fração de energia acima de 6 kHz caiu de 0,004735
 para 0,0000916, aproximadamente 52 vezes. Essa medida inclui componentes de
 fala e não substitui avaliação auditiva de chiado. No bloco 4 caiu de
