@@ -29,6 +29,7 @@ def namespace(label):
     nb = json.loads((ROOT / f'Matraca_Studio_{label}.ipynb').read_text(encoding='utf8'))
     source = ''.join(nb['cells'][3]['source'])
     names = {'save_synth_wav', 'sync_qwen_blocks', 'time_sync_audio',
+             'assemble_timeline_audio',
              'fade_audio_edges', 'limit_audio_peak', 'build_atempo_filter'}
     nodes = [n for n in ast.parse(source).body
              if isinstance(n, ast.FunctionDef) and n.name in names]
@@ -51,6 +52,26 @@ def namespace(label):
 
 
 class JoinSyncTests(unittest.TestCase):
+    def test_video_timeline_matches_original_and_preserves_intro_outro(self):
+        for label in ('T4', 'L4'):
+            with self.subTest(notebook=label), tempfile.TemporaryDirectory() as work:
+                ns, _ = namespace(label)
+                rate = 24000
+                original = torch.full((1, 5*rate), .1)
+                original[:, -rate//2:] = .2
+                speech = .15*torch.sin(torch.arange(3*rate).float()*.1).unsqueeze(0)
+                speech.qwen_chunk_lengths = [3*rate]
+                source, raw, final = [os.path.join(work, n) for n in ('original.wav','raw.wav','final.wav')]
+                save(source, original, rate)
+                ns['save_synth_wav'](raw, speech)
+                ns['assemble_timeline_audio'](source, raw, .5, 4.5, 5.0, final)
+                result, actual_rate = load(final)
+                self.assertEqual(actual_rate, rate)
+                self.assertEqual(result.shape[-1], 5*rate)
+                self.assertAlmostEqual(float(result[0,rate//4]), .1, places=4)
+                self.assertAlmostEqual(float(result[0,-rate//4]), .2, places=4)
+                self.assertGreater(float(result[:,rate:3*rate].square().mean().sqrt()), .05)
+
     def test_real_stretch_leaves_exact_silent_joins(self):
         for label in ('T4', 'L4'):
             with self.subTest(notebook=label), tempfile.TemporaryDirectory() as work:

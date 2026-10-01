@@ -125,3 +125,29 @@ e que verifica divisão e conservação do texto acima do limite. A confirmaçã
 auditiva refere-se à amostra espanhola de 32 segundos; uma dublagem completa,
 as versões longas em francês/inglês e a execução em GPU L4 ainda precisam
 de validação. Não se trata de garantia universal de ausência de artefatos.
+
+## Duração para vídeo
+
+O usuário confirmou que a versão contínua ajustada para 40,7372 segundos
+mantém a qualidade e solicitou que o áudio acompanhe a duração do original.
+A sincronização volta a ficar ativada por padrão em T4 e L4. O agrupamento
+de frases e os parâmetros Qwen aprovados permanecem os mesmos.
+
+Na nova sessão T4, uma geração espanhola completa de nove blocos foi
+concluída sem sincronização, com 282,18 segundos. Seus comprimentos foram
+recuperados dos metadados do próprio notebook. Os primeiros três blocos
+foram processados pela função real de sincronização e montados em uma amostra
+de exatamente 120 segundos, incluindo silêncio complementar ao final.
+Essa amostra testa duas transições entre blocos maiores; sua avaliação
+auditiva foi solicitada ao usuário.
+
+Também foi sincronizado localmente o espanhol completo, sem regenerar a
+voz: original de 349,9733125 segundos, WAV final de 349,9733333 segundos.
+A diferença é inferior a uma amostra PCM de 24 kHz. O ajuste de velocidade
+continua limitado a 18%; diferenças remanescentes são preenchidas com silêncio.
+Essa correspondência de duração não comprova alinhamento de cada frase às
+imagens nem identidade vocal de todo o arquivo.
+
+Os 17 testes passaram. A nova regressão usa WAV e FFmpeg reais para verificar
+a duração final da linha do tempo e a preservação da introdução, fala e
+encerramento em ambos os notebooks. Os áudios pessoais permanecem locais.
