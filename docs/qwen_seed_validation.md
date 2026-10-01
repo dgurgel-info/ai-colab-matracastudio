@@ -200,7 +200,39 @@ Os 19 testes passaram. As novas regressões verificam uma chamada para
 roteiros de aproximadamente dois minutos e de mais de 5.000 caracteres
 em inglês/francês/espanhol, conservação de todo o texto, orçamento de
 geração e recusa da saída de 163,76 segundos do ensaio que atingiu o limite.
-Está em andamento na T4 o ensaio completo em inglês, usando os 5.450
-caracteres da tradução já existente na sessão. Esse ensaio usa teto de
-8.192 tokens; ele só comprovará que 6.144 bastam se terminar abaixo deste
-último orçamento. A avaliação auditiva do arquivo completo permanece pendente.
+O ensaio completo inglês de 5.450 caracteres terminou na T4 com 249,20
+segundos de áudio, 914,24 segundos de processamento e pico de 5,43 GB CUDA.
+O reconhecimento cobriu o roteiro até a última frase, com similaridade de
+97,12% entre as sequências de palavras. A duração equivale a aproximadamente
+3.115 quadros do codec, abaixo do orçamento de 6.144. Isso verifica conteúdo
+e capacidade de geração; não comprova sotaque ou naturalidade.
+
+A prévia inglesa de 120 segundos, extraída de um ajuste experimental de
+249,20 para 349,9733 segundos (velocidade 0,7115), foi reprovada pelo usuário:
+sotaque indiano, ritmo lento e fala não natural. O limite experimental de
+35% de ajuste não foi incorporado aos notebooks. A aprovação espanhola não
+se estende ao inglês; a PR permanece sem merge.
+
+O próximo diagnóstico inglês isola `x_vector_only_mode=True`, conservando
+texto, idioma, semente e amostragem, para comparar a referência de identidade
+sem os códigos acústicos portugueses. Sua avaliação deve usar a velocidade
+original da geração, antes de qualquer ajuste para vídeo. Esse teste de
+1.824 caracteres terminou com 88,72 segundos, 323,66 segundos de processamento
+e pico de 5,06 GB CUDA. A saída é finita, sem clipping; o reconhecimento
+identificou inglês com probabilidade de 99,67%, cobriu a última frase e teve
+97,52% de similaridade entre as sequências de palavras. A prévia entregue
+preserva todas as amostras no ritmo original, apenas convertidas para PCM16.
+A avaliação auditiva permanece pendente; não foi incorporado esse perfil
+aos notebooks.
+
+O ensaio francês contínuo, ainda com referência acústica portuguesa,
+terminou com 81,04 segundos para 1.865 caracteres. O reconhecimento identificou
+francês com probabilidade de 98,41%, cobriu a última frase e teve 92,44% de
+similaridade entre as sequências de palavras. Não há aprovação auditiva.
+
+Uma medição com Silero VAD, margem de 100 ms e silêncio mínimo de 200 ms,
+estimou 52,00 segundos de pausas internas no original de 349,97 segundos,
+contra 5,64 segundos na geração inglesa de 249,20 segundos. Isso motiva
+avaliar a distribuição das pausas antes de alongar toda a fala; não comprova
+que a diferença completa possa ser compensada sem prejudicar a naturalidade.
+GPU L4 e arquivo completo permanecem pendentes de validação auditiva.
