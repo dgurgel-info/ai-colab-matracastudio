@@ -181,3 +181,26 @@ Essa amostra foi entregue para avaliação auditiva. O modo de síntese dos
 notebooks não foi alterado: conteúdo completo e duração correta ainda não
 comprovam fidelidade vocal ou ausência de chiado. A dublagem completa,
 francês/inglês e a GPU L4 continuam pendentes de validação dessa abordagem.
+
+## v7: amostra de dois minutos aprovada
+
+O usuário confirmou que o chiado e a mudança de tom desapareceram na nova
+amostra contínua de 120 segundos. Essa aprovação vale para o trecho espanhol
+ensaiado, incluindo as regiões próximas de 39 e 75 segundos.
+
+A implementação compartilhada de T4/L4 passa a fornecer o texto antecipado
+para as escritas latina/cirílica e agrupa até 6.000 caracteres. Trechos até
+2.000 caracteres usam orçamento de 2.048 tokens; os maiores, 6.144. Chinês,
+japonês e coreano mantêm o limite de 320 caracteres e o modo anterior.
+Saídas próximas ao limite de tokens são recusadas antes de salvar o WAV,
+usando os 1.920 samples/quadro a 24 kHz do codec oficial. A sincronização
+continua ativada por padrão, sem cortar palavras.
+
+Os 19 testes passaram. As novas regressões verificam uma chamada para
+roteiros de aproximadamente dois minutos e de mais de 5.000 caracteres
+em inglês/francês/espanhol, conservação de todo o texto, orçamento de
+geração e recusa da saída de 163,76 segundos do ensaio que atingiu o limite.
+Está em andamento na T4 o ensaio completo em inglês, usando os 5.450
+caracteres da tradução já existente na sessão. Esse ensaio usa teto de
+8.192 tokens; ele só comprovará que 6.144 bastam se terminar abaixo deste
+último orçamento. A avaliação auditiva do arquivo completo permanece pendente.
