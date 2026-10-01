@@ -92,3 +92,36 @@ notebooks, silêncio nas junções após time-stretch, encaminhamento dos
 limites nos fluxos de dublagem/SRT e recusa de truncamento. A avaliação
 auditiva da nova amostra ainda é necessária; ruído dentro da fala gerada
 não pode ser declarado resolvido somente por essas verificações.
+
+## v6: frases agrupadas e ritmo natural
+
+O usuário ainda relatou chiado e pequena variação de voz na amostra v5,
+em torno de 10, 22 e 26 segundos. Portanto, silêncio exato na pausa não
+era evidência suficiente para considerar a qualidade acústica resolvida.
+
+Foi feito novo A/B na mesma T4: o mesmo texto de 647 caracteres, antes
+dividido em cinco chamadas, passou a uma única chamada Qwen, com a mesma
+referência e configuração. A saída contém 32,16 segundos de fala, sem
+emendas, filtros ou time-stretch. A geração consumiu 103,73 segundos e
+atingiu 4,99 GB de memória CUDA alocada no processo de diagnóstico.
+Whisper reconheceu todo o conteúdo solicitado, com ambiguidades nos nomes
+próprios. A avaliação auditiva do usuário primeiro confirmou melhora clara
+dos dois problemas e depois informou que o chiado e a variação desapareceram.
+
+Nos dois notebooks, o Qwen agora agrupa frases até 700 caracteres por chamada,
+em vez de reiniciar o clone a cada 180 caracteres. Chinês, japonês e coreano
+usam 320 caracteres para limitar a duração em escritas mais densas. A semente,
+referência e idioma explícito continuam fixos. Outros motores conservam seus
+limites de texto. Para textos maiores ainda haverá mais de uma chamada.
+
+A sincronização temporal fica desativada por padrão na interface dos dois
+notebooks, preservando o ritmo natural da amostra aprovada. Ela permanece
+opcional, com aviso de que preservar o ritmo pode alterar a duração final.
+Quando ativada, a sincronização Qwen continua sendo aplicada por bloco.
+
+Os 16 testes passaram, incluindo a regressão que mantém um texto de mais
+de 600 caracteres em uma só chamada para espanhol, francês e inglês,
+e que verifica divisão e conservação do texto acima do limite. A confirmação
+auditiva refere-se à amostra espanhola de 32 segundos; uma dublagem completa,
+as versões longas em francês/inglês e a execução em GPU L4 ainda precisam
+de validação. Não se trata de garantia universal de ausência de artefatos.
