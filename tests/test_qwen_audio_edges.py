@@ -23,7 +23,7 @@ def edge_function(label, spans):
                          resample=lambda t, a, b: torch.zeros(round(t.numel()*b/a)))))
     def timestamps(probe, vad, **kwargs):
         assert kwargs['sampling_rate'] == 16000
-        assert kwargs['speech_pad_ms'] == 450
+        assert kwargs['speech_pad_ms'] == 100
         return spans
     module = SimpleNamespace(load_silero_vad=lambda: model, get_speech_timestamps=timestamps)
     exec(compile(ast.Module(body=[node], type_ignores=[]), label, 'exec'), namespace)

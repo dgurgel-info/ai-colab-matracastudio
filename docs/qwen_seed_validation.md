@@ -59,3 +59,36 @@ A geração real foi executada na T4; a L4 recebeu a implementação idêntica e
 os testes locais, sem ensaio acústico em sua GPU. Uma dublagem completa e
 a avaliação auditiva pelo usuário ainda são necessárias. Semente fixa não
 garante a identidade vocal de qualquer texto nem ausência de sotaque.
+
+## v5: montagem e sincronização das junções
+
+Após a avaliação auditiva da amostra v4 pelo usuário, a investigação passou
+às junções. No WAV anterior à sincronização, as quatro pausas tinham RMS zero.
+Após `atempo=0.85` no arquivo concatenado, janelas de 80 ms próximas às
+posições esperadas das junções tinham RMS entre 0,00198 e 0,00364.
+Essas posições são aproximadas: o WSOLA não mantém um mapeamento exato de
+cada amostra. A medição evidencia a alteração das pausas; não quantifica
+isoladamente o chiado percebido.
+
+Os dois notebooks agora salvam os comprimentos dos blocos Qwen junto ao
+WAV temporário e aplicam `atempo` em cada bloco individualmente. As rampas
+são reaplicadas após o ajuste de velocidade e as pausas de 80 ms são
+inseridas depois dele. O ajuste considera a duração da fala separadamente
+das pausas. Duração que exigiria cortar palavras gera erro explícito.
+Outros motores continuam usando sua sincronização existente.
+
+A margem do detector nas bordas foi reduzida de 450 para 100 ms, e a rampa
+dos blocos Qwen passou de 10 para 40 ms. Na amostra real, isso retirou
+92, 124, 0, 220 e 188 ms do início dos cinco blocos, respectivamente.
+Não foi aplicado filtro espectral à fala ou amplificação de volume.
+
+Usando os mesmos cinco áudios brutos gerados na T4, a nova amostra tem
+40,7372 segundos. As junções começam em 10,3350, 21,2865, 26,1571 e 35,0766
+segundos: todas as 1.920 amostras de cada pausa são exatamente zero.
+As pausas internas não são removidas. Os arquivos pessoais continuam fora do Git.
+
+Os 15 testes passaram, incluindo processamento real de WAV/FFmpeg nos dois
+notebooks, silêncio nas junções após time-stretch, encaminhamento dos
+limites nos fluxos de dublagem/SRT e recusa de truncamento. A avaliação
+auditiva da nova amostra ainda é necessária; ruído dentro da fala gerada
+não pode ser declarado resolvido somente por essas verificações.
