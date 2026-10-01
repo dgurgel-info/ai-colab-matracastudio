@@ -138,8 +138,13 @@ concluída sem sincronização, com 282,18 segundos. Seus comprimentos foram
 recuperados dos metadados do próprio notebook. Os primeiros três blocos
 foram processados pela função real de sincronização e montados em uma amostra
 de exatamente 120 segundos, incluindo silêncio complementar ao final.
-Essa amostra testa duas transições entre blocos maiores; sua avaliação
-auditiva foi solicitada ao usuário.
+Essa amostra testa duas transições entre blocos maiores. O usuário confirmou
+estabilidade geral, mas relatou pequeno chiado e mudança de tom nas transições,
+próximas de 39 e 75 segundos. Portanto, o agrupamento de 700 caracteres ainda
+não resolve a qualidade das emendas, mesmo com pausas numericamente silenciosas.
+A PR de duração permanece sem merge durante essa investigação. O próximo
+ensaio compara o mesmo texto dos três blocos (1.907 caracteres) em uma única
+chamada Qwen, mantendo referência, idioma e parâmetros da amostra curta aprovada.
 
 Também foi sincronizado localmente o espanhol completo, sem regenerar a
 voz: original de 349,9733125 segundos, WAV final de 349,9733333 segundos.
