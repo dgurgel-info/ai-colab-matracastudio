@@ -22,9 +22,6 @@ def notebook_namespace(label):
     engine = ''.join(nb['cells'][3]['source'])
     parsed = ast.parse(engine)
     names = {'limit_audio_peak', 'fade_audio_edges', 'split_text_into_chunks',
-             'trim_qwen_padding', 'prepare_qwen_reference', 'clean_qwen_audio',
-             'qwen_speaker_embedding', 'qwen_voice_scores', 'build_quality_tempo_filter',
-             'build_atempo_filter',
              'generate_qwen3_tts_chunked_stream', 'generate_qwen3_tts_chunked'}
     nodes = [n for n in parsed.body if isinstance(n, ast.FunctionDef) and n.name in names]
     nodes += [n for n in parsed.body if isinstance(n, ast.Assign)
@@ -39,8 +36,7 @@ class FakeModel:
     def __init__(self, raw=None, sr=24000):
         self.prompts = []
         self.calls = []
-        self.prompt = [SimpleNamespace(ref_spk_embedding=torch.tensor([1.0, 0.0]))]
-        self.model = SimpleNamespace(extract_speaker_embedding=lambda **kwargs: torch.tensor([1.0, 0.0]))
+        self.prompt = [object()]
         self.raw = raw
         self.sr = sr
 
@@ -61,15 +57,7 @@ class FakeModel:
 class QwenNotebookTests(unittest.TestCase):
     def each(self):
         for label in ('T4', 'L4'):
-            namespace = notebook_namespace(label)[1]
-            # Isola E/S nos testes do gerador; helpers DSP são testados separadamente.
-            def reference(audio, text):
-                if not (text or '').strip():
-                    raise ValueError('Missing reference transcript')
-                return (np.sin(np.arange(24000 * 4) * (2 * np.pi * 220 / 24000)).astype(np.float32), 24000), text
-            namespace['prepare_qwen_reference'] = reference
-            namespace['clean_qwen_audio'] = lambda audio, **kwargs: audio
-            yield label, namespace
+            yield label, notebook_namespace(label)[1]
 
     def test_all_cells_parse_and_shared_qwen_implementation(self):
         sources = []
