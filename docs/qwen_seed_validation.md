@@ -156,3 +156,18 @@ imagens nem identidade vocal de todo o arquivo.
 Os 17 testes passaram. A nova regressão usa WAV e FFmpeg reais para verificar
 a duração final da linha do tempo e a preservação da introdução, fala e
 encerramento em ambos os notebooks. Os áudios pessoais permanecem locais.
+
+## Ensaio contínuo longo: resultado descartado
+
+A chamada única com 1.907 caracteres e `non_streaming_mode=False` atingiu
+o limite de 2.048 tokens: 163,76 segundos, 798,86 segundos de processamento
+e pico de 5,07 GB CUDA no processo de diagnóstico. O Whisper reconheceu
+o texto até aproximadamente 41 segundos; depois detectou repetições que
+não fazem parte do roteiro. Portanto, esse ensaio foi descartado, sem
+aumentar o limite de caracteres nos notebooks ou aplicar a alteração à main.
+A amostra curta aprovada não demonstrava estabilidade para esse texto longo.
+
+Está em avaliação separada o mesmo roteiro com `non_streaming_mode=True`,
+que, na implementação oficial, fornece o texto completo antes da fala.
+Esse teste conserva os demais parâmetros e a referência; ainda não valida
+uma correção nem as versões longas em inglês/francês.
