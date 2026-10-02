@@ -236,3 +236,19 @@ contra 5,64 segundos na geração inglesa de 249,20 segundos. Isso motiva
 avaliar a distribuição das pausas antes de alongar toda a fala; não comprova
 que a diferença completa possa ser compensada sem prejudicar a naturalidade.
 GPU L4 e arquivo completo permanecem pendentes de validação auditiva.
+
+## v8: perfil inglês aprovado e aplicado nos dois notebooks
+
+Em 2 de outubro de 2026, o usuário avaliou a amostra inglesa de 88,72 segundos
+no ritmo original como "perfeito" e autorizou commit e merge. T4 e L4 passam
+a usar `x_vector_only_mode=True` para inglês, conservando a mesma referência,
+idioma explícito, semente e parâmetros da amostra. Os demais idiomas mantêm
+ICL, incluindo o perfil espanhol aprovado. Os testes verificam a seleção do
+perfil nas duas GPUs, inclusive nos códigos regionais, sem alterar o idioma
+ou a referência entre chamadas.
+
+Essa aprovação se limita à amostra inglesa sem ajuste de velocidade. Não
+comprova naturalidade após sincronizar o arquivo completo, francês ou GPU L4.
+O ajuste experimental de 35% continua excluído. A sincronização existente
+conserva o limite de 18% e a duração final do original, com preenchimento
+remanescente por silêncio; ainda pode exigir revisão auditiva para vídeo.

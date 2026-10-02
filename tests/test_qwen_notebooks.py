@@ -77,7 +77,7 @@ class QwenNotebookTests(unittest.TestCase):
 
     def test_language_and_fixed_full_prompt_across_blocks(self):
         for label, ns in self.each():
-            for code, language in [('en', 'English'), ('fr-FR', 'French'), ('es-ES', 'Spanish'),
+            for code, language in [('en', 'English'), ('en-US', 'English'), ('fr-FR', 'French'), ('es-ES', 'Spanish'),
                                    ('de', 'German'), ('pt-BR', 'Portuguese'), ('zh-CN', 'Chinese')]:
                 with self.subTest(notebook=label, language=code):
                     model = FakeModel()
@@ -86,7 +86,9 @@ class QwenNotebookTests(unittest.TestCase):
                     events = list(ns['generate_qwen3_tts_chunked_stream'](
                         model, text, 'reference.wav', 'Transcrição da voz original.', code))
                     self.assertEqual(len(model.prompts), 1)
-                    self.assertFalse(model.prompts[0]['x_vector_only_mode'])
+                    self.assertEqual(model.prompts[0]['x_vector_only_mode'], language == 'English')
+                    self.assertEqual(model.prompts[0]['ref_audio'], 'reference.wav')
+                    self.assertEqual(model.prompts[0]['ref_text'], 'Transcrição da voz original.')
                     self.assertGreater(len(model.calls), 1)
                     self.assertEqual(model.seeds, [42] * len(model.calls))
                     for call in model.calls:
@@ -171,6 +173,7 @@ class QwenNotebookTests(unittest.TestCase):
                         self.assertEqual(model.calls[0]['text'], text)
                         self.assertTrue(model.calls[0]['non_streaming_mode'])
                         self.assertEqual(model.calls[0]['max_new_tokens'], budget)
+                        self.assertEqual(model.prompts[0]['x_vector_only_mode'], language == 'en')
                         self.assertEqual(result.qwen_chunk_lengths, [2400])
 
     def test_generation_at_token_limit_is_rejected_before_publication(self):
