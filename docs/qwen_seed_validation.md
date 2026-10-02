@@ -125,3 +125,130 @@ e que verifica divisão e conservação do texto acima do limite. A confirmaçã
 auditiva refere-se à amostra espanhola de 32 segundos; uma dublagem completa,
 as versões longas em francês/inglês e a execução em GPU L4 ainda precisam
 de validação. Não se trata de garantia universal de ausência de artefatos.
+
+## Duração para vídeo
+
+O usuário confirmou que a versão contínua ajustada para 40,7372 segundos
+mantém a qualidade e solicitou que o áudio acompanhe a duração do original.
+A sincronização volta a ficar ativada por padrão em T4 e L4. O agrupamento
+de frases e os parâmetros Qwen aprovados permanecem os mesmos.
+
+Na nova sessão T4, uma geração espanhola completa de nove blocos foi
+concluída sem sincronização, com 282,18 segundos. Seus comprimentos foram
+recuperados dos metadados do próprio notebook. Os primeiros três blocos
+foram processados pela função real de sincronização e montados em uma amostra
+de exatamente 120 segundos, incluindo silêncio complementar ao final.
+Essa amostra testa duas transições entre blocos maiores. O usuário confirmou
+estabilidade geral, mas relatou pequeno chiado e mudança de tom nas transições,
+próximas de 39 e 75 segundos. Portanto, o agrupamento de 700 caracteres ainda
+não resolve a qualidade das emendas, mesmo com pausas numericamente silenciosas.
+A PR de duração permanece sem merge durante essa investigação. O próximo
+ensaio compara o mesmo texto dos três blocos (1.907 caracteres) em uma única
+chamada Qwen, mantendo referência, idioma e parâmetros da amostra curta aprovada.
+
+Também foi sincronizado localmente o espanhol completo, sem regenerar a
+voz: original de 349,9733125 segundos, WAV final de 349,9733333 segundos.
+A diferença é inferior a uma amostra PCM de 24 kHz. O ajuste de velocidade
+continua limitado a 18%; diferenças remanescentes são preenchidas com silêncio.
+Essa correspondência de duração não comprova alinhamento de cada frase às
+imagens nem identidade vocal de todo o arquivo.
+
+Os 17 testes passaram. A nova regressão usa WAV e FFmpeg reais para verificar
+a duração final da linha do tempo e a preservação da introdução, fala e
+encerramento em ambos os notebooks. Os áudios pessoais permanecem locais.
+
+## Ensaio contínuo longo: resultado descartado
+
+A chamada única com 1.907 caracteres e `non_streaming_mode=False` atingiu
+o limite de 2.048 tokens: 163,76 segundos, 798,86 segundos de processamento
+e pico de 5,07 GB CUDA no processo de diagnóstico. O Whisper reconheceu
+o texto até aproximadamente 41 segundos; depois detectou repetições que
+não fazem parte do roteiro. Portanto, esse ensaio foi descartado, sem
+aumentar o limite de caracteres nos notebooks ou aplicar a alteração à main.
+A amostra curta aprovada não demonstrava estabilidade para esse texto longo.
+
+O mesmo roteiro foi gerado separadamente com `non_streaming_mode=True`,
+que, na implementação oficial, fornece o texto completo antes da fala.
+Mantendo os demais parâmetros e a referência, a saída teve 95,8400 segundos,
+353,42 segundos de processamento e pico de 5,06 GB CUDA. O Whisper reconheceu
+o roteiro até a última frase, sem o ciclo de repetição do primeiro teste,
+com ambiguidades em nomes próprios e siglas. A versão sincronizada tem
+exatamente 120 segundos, sem emendas internas; a fala acaba aproximadamente
+em 116,81 segundos e o restante é silêncio complementar. O pico final é
+0,7066 e todas as amostras são finitas.
+
+Essa amostra foi entregue para avaliação auditiva. O modo de síntese dos
+notebooks não foi alterado: conteúdo completo e duração correta ainda não
+comprovam fidelidade vocal ou ausência de chiado. A dublagem completa,
+francês/inglês e a GPU L4 continuam pendentes de validação dessa abordagem.
+
+## v7: amostra de dois minutos aprovada
+
+O usuário confirmou que o chiado e a mudança de tom desapareceram na nova
+amostra contínua de 120 segundos. Essa aprovação vale para o trecho espanhol
+ensaiado, incluindo as regiões próximas de 39 e 75 segundos.
+
+A implementação compartilhada de T4/L4 passa a fornecer o texto antecipado
+para as escritas latina/cirílica e agrupa até 6.000 caracteres. Trechos até
+2.000 caracteres usam orçamento de 2.048 tokens; os maiores, 6.144. Chinês,
+japonês e coreano mantêm o limite de 320 caracteres e o modo anterior.
+Saídas próximas ao limite de tokens são recusadas antes de salvar o WAV,
+usando os 1.920 samples/quadro a 24 kHz do codec oficial. A sincronização
+continua ativada por padrão, sem cortar palavras.
+
+Os 19 testes passaram. As novas regressões verificam uma chamada para
+roteiros de aproximadamente dois minutos e de mais de 5.000 caracteres
+em inglês/francês/espanhol, conservação de todo o texto, orçamento de
+geração e recusa da saída de 163,76 segundos do ensaio que atingiu o limite.
+O ensaio completo inglês de 5.450 caracteres terminou na T4 com 249,20
+segundos de áudio, 914,24 segundos de processamento e pico de 5,43 GB CUDA.
+O reconhecimento cobriu o roteiro até a última frase, com similaridade de
+97,12% entre as sequências de palavras. A duração equivale a aproximadamente
+3.115 quadros do codec, abaixo do orçamento de 6.144. Isso verifica conteúdo
+e capacidade de geração; não comprova sotaque ou naturalidade.
+
+A prévia inglesa de 120 segundos, extraída de um ajuste experimental de
+249,20 para 349,9733 segundos (velocidade 0,7115), foi reprovada pelo usuário:
+sotaque indiano, ritmo lento e fala não natural. O limite experimental de
+35% de ajuste não foi incorporado aos notebooks. A aprovação espanhola não
+se estende ao inglês; a PR permanece sem merge.
+
+O próximo diagnóstico inglês isola `x_vector_only_mode=True`, conservando
+texto, idioma, semente e amostragem, para comparar a referência de identidade
+sem os códigos acústicos portugueses. Sua avaliação deve usar a velocidade
+original da geração, antes de qualquer ajuste para vídeo. Esse teste de
+1.824 caracteres terminou com 88,72 segundos, 323,66 segundos de processamento
+e pico de 5,06 GB CUDA. A saída é finita, sem clipping; o reconhecimento
+identificou inglês com probabilidade de 99,67%, cobriu a última frase e teve
+97,52% de similaridade entre as sequências de palavras. A prévia entregue
+preserva todas as amostras no ritmo original, apenas convertidas para PCM16.
+A avaliação auditiva permanece pendente; não foi incorporado esse perfil
+aos notebooks.
+
+O ensaio francês contínuo, ainda com referência acústica portuguesa,
+terminou com 81,04 segundos para 1.865 caracteres. O reconhecimento identificou
+francês com probabilidade de 98,41%, cobriu a última frase e teve 92,44% de
+similaridade entre as sequências de palavras. Não há aprovação auditiva.
+
+Uma medição com Silero VAD, margem de 100 ms e silêncio mínimo de 200 ms,
+estimou 52,00 segundos de pausas internas no original de 349,97 segundos,
+contra 5,64 segundos na geração inglesa de 249,20 segundos. Isso motiva
+avaliar a distribuição das pausas antes de alongar toda a fala; não comprova
+que a diferença completa possa ser compensada sem prejudicar a naturalidade.
+GPU L4 e arquivo completo permanecem pendentes de validação auditiva.
+
+## v8: perfil inglês aprovado e aplicado nos dois notebooks
+
+Em 2 de outubro de 2026, o usuário avaliou a amostra inglesa de 88,72 segundos
+no ritmo original como "perfeito" e autorizou commit e merge. T4 e L4 passam
+a usar `x_vector_only_mode=True` para inglês, conservando a mesma referência,
+idioma explícito, semente e parâmetros da amostra. Os demais idiomas mantêm
+ICL, incluindo o perfil espanhol aprovado. Os testes verificam a seleção do
+perfil nas duas GPUs, inclusive nos códigos regionais, sem alterar o idioma
+ou a referência entre chamadas.
+
+Essa aprovação se limita à amostra inglesa sem ajuste de velocidade. Não
+comprova naturalidade após sincronizar o arquivo completo, francês ou GPU L4.
+O ajuste experimental de 35% continua excluído. A sincronização existente
+conserva o limite de 18% e a duração final do original, com preenchimento
+remanescente por silêncio; ainda pode exigir revisão auditiva para vídeo.

@@ -77,22 +77,25 @@ class QwenNotebookTests(unittest.TestCase):
 
     def test_language_and_fixed_full_prompt_across_blocks(self):
         for label, ns in self.each():
-            for code, language in [('en', 'English'), ('fr-FR', 'French'), ('es-ES', 'Spanish'),
+            for code, language in [('en', 'English'), ('en-US', 'English'), ('fr-FR', 'French'), ('es-ES', 'Spanish'),
                                    ('de', 'German'), ('pt-BR', 'Portuguese'), ('zh-CN', 'Chinese')]:
                 with self.subTest(notebook=label, language=code):
                     model = FakeModel()
-                    text = ('Uma frase completa para testar a voz e as transições. ' * 15).strip()
+                    repetitions = 15 if language == 'Chinese' else 120
+                    text = ('Uma frase completa para testar a voz e as transições. ' * repetitions).strip()
                     events = list(ns['generate_qwen3_tts_chunked_stream'](
                         model, text, 'reference.wav', 'Transcrição da voz original.', code))
                     self.assertEqual(len(model.prompts), 1)
-                    self.assertFalse(model.prompts[0]['x_vector_only_mode'])
+                    self.assertEqual(model.prompts[0]['x_vector_only_mode'], language == 'English')
+                    self.assertEqual(model.prompts[0]['ref_audio'], 'reference.wav')
+                    self.assertEqual(model.prompts[0]['ref_text'], 'Transcrição da voz original.')
                     self.assertGreater(len(model.calls), 1)
                     self.assertEqual(model.seeds, [42] * len(model.calls))
                     for call in model.calls:
                         self.assertIs(call['voice_clone_prompt'], model.prompt)
                         self.assertEqual(call['language'], language)
                         self.assertNotIn('instruct_ids', call)
-                        self.assertFalse(call['non_streaming_mode'])
+                        self.assertEqual(call['non_streaming_mode'], language != 'Chinese')
                         self.assertTrue(call['subtalker_dosample'])
                         self.assertEqual(call['subtalker_temperature'], 0.9)
                     blocks = [t for event, _, t in events if event == 'chunk_done']
@@ -141,17 +144,44 @@ class QwenNotebookTests(unittest.TestCase):
                     self.assertEqual(model.calls[0]['text'], text)
                     self.assertEqual(events[-1][2].qwen_chunk_lengths, [2400])
             model = FakeModel()
-            long_text = text + ' ' + text
+            long_text = ' '.join([text] * 10)
             list(ns['generate_qwen3_tts_chunked_stream'](
                 model, long_text, 'ref.wav', 'Fala original.', 'es'))
             self.assertGreater(len(model.calls), 1)
             self.assertEqual(' '.join(c['text'] for c in model.calls), long_text)
-            self.assertTrue(all(len(c['text']) <= 700 for c in model.calls))
+            self.assertTrue(all(len(c['text']) <= 6000 for c in model.calls))
             model = FakeModel()
             list(ns['generate_qwen3_tts_chunked_stream'](
                 model, text, 'ref.wav', 'Fala original.', 'zh-CN'))
             self.assertGreater(len(model.calls), 1)
             self.assertTrue(all(len(c['text']) <= 320 for c in model.calls))
+
+    def test_long_narration_uses_one_call_and_enough_generation_budget(self):
+        sentence = 'Uma frase completa descreve a configuração e explica o próximo passo. '
+        two_minutes = (sentence * 27).strip()
+        full_narration = (sentence * 81).strip()
+        self.assertLessEqual(len(two_minutes), 2000)
+        self.assertGreater(len(full_narration), 5000)
+        self.assertLessEqual(len(full_narration), 6000)
+        for label, ns in self.each():
+            for language in ('es', 'fr', 'en'):
+                for text, budget in [(two_minutes, 2048), (full_narration, 6144)]:
+                    with self.subTest(notebook=label, language=language, budget=budget):
+                        model = FakeModel()
+                        result = ns['generate_qwen3_tts_chunked'](model, text, 'ref.wav', 'Fala original.', language)
+                        self.assertEqual(len(model.calls), 1)
+                        self.assertEqual(model.calls[0]['text'], text)
+                        self.assertTrue(model.calls[0]['non_streaming_mode'])
+                        self.assertEqual(model.calls[0]['max_new_tokens'], budget)
+                        self.assertEqual(model.prompts[0]['x_vector_only_mode'], language == 'en')
+                        self.assertEqual(result.qwen_chunk_lengths, [2400])
+
+    def test_generation_at_token_limit_is_rejected_before_publication(self):
+        # The real failed 2,048-token experiment returned 163.76 seconds.
+        raw = .1 * torch.sin(torch.arange(2047 * 1920).float() * .1)
+        for label, ns in self.each():
+            with self.subTest(notebook=label), self.assertRaisesRegex(ValueError, 'limite de geração'):
+                ns['generate_qwen3_tts_chunked'](FakeModel(raw), 'Hola.', 'ref.wav', 'Fala.', 'es')
 
     def test_bad_reference_and_output_fail_explicitly(self):
         for label, ns in self.each():
