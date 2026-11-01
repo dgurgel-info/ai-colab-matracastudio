@@ -50,7 +50,7 @@ class HiggsServer:
     """Sobe/derruba o servidor e sintetiza partes via HTTP."""
 
     def __init__(self, workdir: str = "higgs_server", model_id: str = MODEL_ID, port: int = 8000,
-                 command: Optional[Sequence[str]] = None, startup_timeout: float = 1200.0,
+                 command: Optional[Sequence[str]] = None, startup_timeout: float = 2400.0,
                  request_timeout: float = 600.0):
         self.workdir = os.path.abspath(workdir)
         self.model_id = model_id
@@ -76,6 +76,10 @@ class HiggsServer:
     @property
     def serve_bin(self) -> str:
         return os.path.join(self.venv_dir, "bin", "sgl-omni")
+
+    @property
+    def venv_bin(self) -> str:
+        return os.path.join(self.venv_dir, "bin")
 
     @property
     def venv_python(self) -> str:
@@ -110,13 +114,14 @@ class HiggsServer:
 
     def ensure_installed(self, log: Log = print) -> None:
         """uv + sglang-omni num venv Python 3.12 separado (feito uma vez por sessão)."""
-        if self.command or self.installed():
+        if self.command:
+            return
+        if self.installed():
+            self.ensure_build_tools(log)       # venv de uma versão anterior pode não ter o ninja no PATH
             return
         os.makedirs(self.workdir, exist_ok=True)
         log("📦 Instalando o servidor do Higgs TTS 3 em ambiente isolado (pode levar vários minutos)...")
-        if shutil.which("uv") is None:
-            self._run([sys.executable, "-m", "pip", "install", "-q", "uv"], log)
-        uv = shutil.which("uv") or os.path.join(os.path.dirname(sys.executable), "uv")
+        uv = self._uv(log)
         if not os.path.isdir(self.repo_dir):
             self._run(["git", "clone", "--depth", "1", SGLANG_OMNI_REPO, self.repo_dir], log)
         env = self.clean_env()
@@ -133,6 +138,38 @@ class HiggsServer:
                   log, cwd=self.repo_dir, env=env)
         if not self.installed():
             raise HiggsError("A instalação terminou, mas o executável sgl-omni não foi encontrado.")
+        self.ensure_build_tools(log)
+
+    def _uv(self, log: Log) -> str:
+        if shutil.which("uv") is None:
+            self._run([sys.executable, "-m", "pip", "install", "-q", "uv"], log)
+        return shutil.which("uv") or os.path.join(os.path.dirname(sys.executable), "uv")
+
+    def server_env(self) -> dict:
+        """Ambiente do servidor = o que ``source .venv/bin/activate`` daria.
+
+        O flashinfer compila kernels (JIT) ao iniciar e chama ``ninja``/``nvcc`` pelo PATH. Sem o bin do venv
+        (ninja) e o do CUDA (nvcc) no PATH, o servidor morre com ``FileNotFoundError: 'ninja'``.
+        """
+        env = {k: v for k, v in os.environ.items() if k not in ("PYTHONPATH", "PYTHONHOME", "CONDA_PREFIX")}
+        prefix = [self.venv_bin]
+        cuda_home = env.get("CUDA_HOME") or ("/usr/local/cuda" if os.path.isdir("/usr/local/cuda") else "")
+        if cuda_home:
+            env["CUDA_HOME"] = cuda_home
+            prefix.append(os.path.join(cuda_home, "bin"))
+        env["PATH"] = os.pathsep.join(prefix + [env.get("PATH", "")])
+        env["VIRTUAL_ENV"] = self.venv_dir
+        return env
+
+    def ensure_build_tools(self, log: Log = print) -> None:
+        """Garante ``ninja`` no PATH do servidor (instala no venv se faltar) e avisa se não houver ``nvcc``."""
+        path = self.server_env()["PATH"]
+        if shutil.which("ninja", path=path) is None:
+            log("🔧 Instalando o ninja no ambiente do Higgs (o flashinfer compila kernels ao iniciar)...")
+            self._run([self._uv(log), "pip", "install", "--python", self.venv_python, "ninja"], log,
+                      env=self.clean_env())
+        if shutil.which("nvcc", path=path) is None:
+            log("⚠️ nvcc não encontrado no PATH: a compilação dos kernels pode falhar. No Colab ele fica em /usr/local/cuda/bin.")
 
     # ------------------------------------------------------------------ ciclo de vida
     def _server_command(self) -> List[str]:
@@ -152,7 +189,7 @@ class HiggsServer:
                 continue
         return False
 
-    def _tail_log(self, n: int = 1500) -> str:
+    def _tail_log(self, n: int = 3500) -> str:
         try:
             with open(self.log_path, encoding="utf-8", errors="replace") as fh:
                 return fh.read()[-n:]
@@ -167,7 +204,7 @@ class HiggsServer:
         logfile = open(self.log_path, "w", encoding="utf-8")
         popen_kw = {"start_new_session": True} if os.name != "nt" else {}
         self.proc = subprocess.Popen(self._server_command(), cwd=self.workdir, stdout=logfile,
-                                     stderr=subprocess.STDOUT, env=dict(os.environ), **popen_kw)
+                                     stderr=subprocess.STDOUT, env=self.server_env(), **popen_kw)
         t0, last = time.time(), 0.0
         while time.time() - t0 < self.startup_timeout:
             if not self._alive():

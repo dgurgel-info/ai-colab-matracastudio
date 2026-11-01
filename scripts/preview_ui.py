@@ -5,14 +5,14 @@ Executa o código REAL dos Passos 3 e 4 do notebook (interface, fila de jobs, tr
 partes, montagem, masterização, aba de revisão), trocando só o que exige GPU/internet:
   * Whisper         -> transcrição de exemplo
   * Tradutor        -> tradução de exemplo (prefixa o idioma)
-  * VoxCPM2/Qwen3/OmniVoice -> voz sintética determinística por semente
+  * Qwen3/OmniVoice/Higgs -> voz sintética determinística por semente
 
 Para demonstrar a revisão por partes, algumas partes saem "destoantes" na semente base
 (tom e volume diferentes), como pode acontecer com um TTS de verdade. Desligue com --no-drift.
 
 Uso:
     pip install gradio torch torchaudio numpy scipy soundfile requests imageio-ffmpeg
-    python scripts/preview_ui.py                 # L4 (VoxCPM2, Qwen3, OmniVoice)
+    python scripts/preview_ui.py                 # L4 (Qwen3, OmniVoice, Higgs)
     python scripts/preview_ui.py --notebook T4 --port 7861
 """
 
@@ -138,13 +138,6 @@ def make_fake_models(drift: bool):
 
     from matraca import dsp
 
-    class Vox:
-        tts_model = types.SimpleNamespace(sample_rate=48000)
-
-        def generate(self, text, **kw):
-            text = re.sub(r"^\([^)]*\)\s*", "", text)      # o prefixo de sotaque não é falado
-            return synth_voice(text, 48000, torch.initial_seed(), drift)
-
     class Qwen:
         def __init__(self):
             self.model = types.SimpleNamespace(extract_speaker_embedding=self._embed)
@@ -171,7 +164,7 @@ def make_fake_models(drift: bool):
         def close(self):
             pass
 
-    return {"VoxCPM2": Vox(), "Qwen3-TTS": Qwen(), "OmniVoice": Omni(), "Higgs TTS 3": Higgs()}
+    return {"Qwen3-TTS": Qwen(), "OmniVoice": Omni(), "Higgs TTS 3": Higgs()}
 
 
 def main():
@@ -207,8 +200,7 @@ def main():
     def load_tts_model(choice, log=print, progress=None):
         import time
         c = str(choice)
-        name = ("VoxCPM2" if "VoxCPM" in c else "Higgs TTS 3" if "Higgs" in c
-                else "Qwen3-TTS" if "Qwen" in c else "OmniVoice")
+        name = "Higgs TTS 3" if "Higgs" in c else "Qwen3-TTS" if "Qwen" in c else "OmniVoice"
         progress = progress or (lambda *a, **k: None)
         previous = ns["engine_manager"].name
         if previous and previous != name:                          # simula a troca para ver a barra de progresso

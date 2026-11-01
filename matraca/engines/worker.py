@@ -1,9 +1,9 @@
 """Worker de um motor de voz: roda DENTRO do venv do motor e expõe o modelo por HTTP local.
 
-    python -m matraca.engines.worker --engine voxcpm2 --port 8123
+    python -m matraca.engines.worker --engine qwen3 --port 8123
 
 Cada motor tem o seu venv (bibliotecas e versões próprias), por isso nenhum import pesado fica no topo:
-os carregadores abaixo só importam torch/voxcpm/qwen_tts/omnivoice quando o worker já está no venv certo.
+os carregadores abaixo só importam torch/qwen_tts/omnivoice quando o worker já está no venv certo.
 """
 
 from __future__ import annotations
@@ -30,19 +30,6 @@ def loader(name: str):
 
 
 # ------------------------------------------------------------------ carregadores (um por motor)
-@loader("voxcpm2")
-def load_voxcpm2():
-    import torch
-    from voxcpm import VoxCPM
-    print("🎙️ Carregando VoxCPM2 2B (OpenBMB) — 48 kHz / qualidade máxima...", flush=True)
-    return VoxCPM.from_pretrained(
-        "openbmb/VoxCPM2",
-        load_denoiser=False,
-        optimize=torch.cuda.is_available(),
-        device="cuda" if torch.cuda.is_available() else "cpu",
-    )
-
-
 @loader("qwen3")
 def load_qwen3():
     import torch

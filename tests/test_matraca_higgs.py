@@ -126,7 +126,7 @@ def fake_installer(monkeypatch, tmp_path, python_version="3.12"):
         return types.SimpleNamespace(returncode=0, stdout=out)
 
     monkeypatch.setattr("matraca.engines.higgs.subprocess.run", fake_run)
-    monkeypatch.setattr("matraca.engines.higgs.shutil.which", lambda name: "/usr/bin/uv")
+    monkeypatch.setattr("matraca.engines.higgs.shutil.which", lambda name, path=None: "/usr/bin/uv")
     (tmp_path / "srv" / "sglang-omni").mkdir(parents=True)             # repositório "já clonado"
     return calls
 
@@ -156,9 +156,63 @@ def test_install_failure_keeps_the_full_log(monkeypatch, tmp_path):
         return types.SimpleNamespace(returncode=1, stdout="x" * 5000 + "error: can't find Rust compiler")
 
     monkeypatch.setattr("matraca.engines.higgs.subprocess.run", failing)
-    monkeypatch.setattr("matraca.engines.higgs.shutil.which", lambda name: "/usr/bin/uv")
+    monkeypatch.setattr("matraca.engines.higgs.shutil.which", lambda name, path=None: "/usr/bin/uv")
     (tmp_path / "srv" / "sglang-omni").mkdir(parents=True)
     s = HiggsServer(workdir=str(tmp_path / "srv"))
     with pytest.raises(HiggsError, match="Rust compiler"):
         s.ensure_installed(lambda m: None)
     assert "Rust compiler" in Path(s.install_log_path).read_text(encoding="utf-8")
+
+
+# ------------------------------------------------------------------ ambiente do servidor (flashinfer compila com ninja/nvcc)
+def test_server_env_activates_the_venv_and_exposes_cuda(monkeypatch, tmp_path):
+    monkeypatch.setenv("CUDA_HOME", str(tmp_path / "cuda"))
+    monkeypatch.setenv("PYTHONPATH", "/algum/lugar")
+    s = HiggsServer(workdir=str(tmp_path / "srv"))
+    env = s.server_env()
+    path = env["PATH"].split(os.pathsep)
+    assert path[0] == s.venv_bin and path[1] == os.path.join(str(tmp_path / "cuda"), "bin")
+    assert env["VIRTUAL_ENV"] == s.venv_dir and env["CUDA_HOME"] == str(tmp_path / "cuda")
+    assert "PYTHONPATH" not in env                                   # não vaza o Python do notebook para o venv
+
+
+def test_start_uses_the_server_env_so_ninja_is_found(monkeypatch, tmp_path):
+    captured = {}
+
+    class Stop(Exception):
+        pass
+
+    def fake_popen(cmd, **kw):
+        captured.update(kw)
+        raise Stop
+
+    monkeypatch.setattr("matraca.engines.higgs.subprocess.Popen", fake_popen)
+    s = HiggsServer(workdir=str(tmp_path / "srv"))
+    with pytest.raises(Stop):
+        s.start(lambda m: None)
+    assert captured["env"]["PATH"].split(os.pathsep)[0] == s.venv_bin
+
+
+def test_missing_ninja_is_installed_into_the_venv_and_a_missing_nvcc_is_only_a_warning(monkeypatch, tmp_path):
+    calls, logs = [], []
+    monkeypatch.setattr("matraca.engines.higgs.subprocess.run",
+                        lambda cmd, **kw: calls.append(list(cmd)) or types.SimpleNamespace(returncode=0, stdout=""))
+    monkeypatch.setattr("matraca.engines.higgs.shutil.which",
+                        lambda name, path=None: "/usr/bin/uv" if name == "uv" else None)     # sem ninja nem nvcc
+    s = HiggsServer(workdir=str(tmp_path / "srv"))
+    s.ensure_build_tools(logs.append)
+    assert calls == [["/usr/bin/uv", "pip", "install", "--python", s.venv_python, "ninja"]]
+    assert any("nvcc" in m for m in logs)
+
+
+def test_already_installed_server_still_gets_its_build_tools(monkeypatch, tmp_path):
+    calls = []
+    monkeypatch.setattr("matraca.engines.higgs.subprocess.run",
+                        lambda cmd, **kw: calls.append(list(cmd)) or types.SimpleNamespace(returncode=0, stdout=""))
+    monkeypatch.setattr("matraca.engines.higgs.shutil.which",
+                        lambda name, path=None: "/usr/bin/uv" if name == "uv" else None)
+    s = HiggsServer(workdir=str(tmp_path / "srv"))
+    os.makedirs(os.path.dirname(s.serve_bin))
+    open(s.serve_bin, "w").close()                                   # venv de uma versão anterior, sem ninja
+    s.ensure_installed(lambda m: None)
+    assert calls and calls[0][-1] == "ninja" and "clone" not in " ".join(calls[0])
