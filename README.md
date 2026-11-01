@@ -21,7 +21,7 @@ O foco desta versão é **dublar vídeos para o YouTube com a mesma voz do come�
 
 ### Por que usar a L4?
 
-A versão L4 carrega o **VoxCPM2 2B** como motor padrão, com saída nativa em **48 kHz**, clonagem Hi-Fi e suporte a 11 idiomas. A GPU L4 tem 24 GB de VRAM, oferecendo mais margem para o modelo de 2B, Whisper e processamento de áudio do que a T4. Isso permite síntese de maior qualidade e, na prática, geração mais rápida que a T4 para o mesmo trabalho.
+A versão L4 tem o **VoxCPM2 2B** como motor padrão (iniciado quando selecionado), com saída nativa em **48 kHz**, clonagem Hi-Fi e suporte a 11 idiomas. A GPU L4 tem 24 GB de VRAM, oferecendo mais margem para o modelo de 2B, Whisper e processamento de áudio do que a T4. Isso permite síntese de maior qualidade e, na prática, geração mais rápida que a T4 para o mesmo trabalho.
 
 Na dublagem multilíngue, o VoxCPM2 usa orientação de sotaque nativo por idioma — por exemplo, *General American English* para inglês — para evitar sotaques estrangeiros inadequados. Para clonagem livre, o modo Hi-Fi combina áudio de referência e transcrição para preservar timbre, ritmo, emoção e prosódia.
 
@@ -36,7 +36,7 @@ Na dublagem multilíngue, o VoxCPM2 usa orientação de sotaque nativo por idiom
 | **OmniVoice** | T4 e L4 | Alternativa leve, rápida e com suporte a Árabe. |
 | **Higgs TTS 3 4B** 🧪 | L4 | Experimental. Roda num servidor isolado (SGLang-Omni, Python 3.12) instalado só quando você o escolhe. **Licença não comercial**: veja abaixo. |
 
-O aplicativo mantém somente **um motor de TTS na GPU por vez**. Ao trocar o modelo, o anterior é removido da VRAM antes do próximo carregamento.
+O aplicativo mantém somente **um motor de TTS por vez**, e **cada motor roda no próprio ambiente (venv)**, criado com `uv` na primeira vez em que você o seleciona (VoxCPM2, Qwen3-TTS e OmniVoice têm dependências que se contradizem, então não dividem bibliotecas). Ao selecionar outro modelo na interface, o processo do anterior é encerrado, a VRAM volta inteira, e o novo é preparado e iniciado. Uma **barra de progresso fixa no topo** mostra cada etapa (descarregar, criar o ambiente, instalar, baixar e iniciar). O ambiente fica em `engines/` e é reaproveitado enquanto a sessão do Colab existir; a primeira seleção de cada modelo leva alguns minutos.
 
 ### Fidelidade e pronúncia com Qwen3-TTS
 
@@ -109,7 +109,7 @@ Abra diretamente a versão adequada à sua GPU:
 
 1. [![Abrir Matraca Studio L4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_L4.ipynb)
 2. Em **Ambiente de execução → Alterar tipo de ambiente de execução**, selecione **L4 GPU**.
-3. Execute as células do **Passo 1** ao **Passo 4** em ordem. A primeira carga baixa os pesos do VoxCPM2 e pode levar alguns minutos.
+3. Execute as células do **Passo 1** ao **Passo 4** em ordem. A primeira vez que você seleciona cada modelo, o notebook cria o venv dele e baixa os pesos, o que pode levar alguns minutos.
 4. Na interface, mantenha **VoxCPM2 2B** para a melhor qualidade ou selecione Qwen3-TTS/OmniVoice quando necessário. O **Higgs TTS 3** é experimental (veja a seção própria).
 5. Para geração máxima, mantenha os **30 passos de difusão** do VoxCPM2. Use o **Passo 5** para criar o ZIP final.
 
@@ -190,7 +190,8 @@ ai-colab-matracastudio/
 │   ├── parts.py, qc.py          # Divisão em partes e controle de qualidade
 │   ├── session.py, timeline.py  # Sessão por partes (takes, regeneração), intro/outro e montagem
 │   ├── dubbing.py               # Orquestração independente do motor
-│   ├── engines/higgs.py         # Higgs TTS 3 (servidor isolado)
+│   ├── engines/                 # Motores: gerenciador (um por vez), workers por venv e Higgs TTS 3
+│   │   ├── manager.py, venv_engine.py, worker.py, rpc.py, higgs.py
 │   └── ui/                      # Tema/CSS e aba Revisão por partes
 ├── scripts/preview_ui.py        # Prévia local da interface sem GPU
 ├── tests/                       # Testes automatizados
@@ -211,7 +212,8 @@ O Passo 4 abre a interface com um link público `gradio.live` **sem senha**. Que
 | *"A fala gerada é longa demais para os X s do original sem cortar palavras"* | A tradução ficou mais longa que o áudio original (limite de 18% de aceleração). As partes já geradas ficam salvas: na aba 🧩 desmarque *Ajustar ao tempo do original* e remonte, ou encurte o texto das partes e regenere. |
 | Uma parte soa diferente das outras | Abra a aba 🧩, ouça a parte, use **Regenerar (nova variação)** ou escolha outro *take*, e **Remontar o áudio final**. Com o Qwen3-TTS, partes maiores tendem a manter melhor o timbre. |
 | *"Não foi possível baixar o núcleo do Matraca"* no Passo 1 | O Colab precisa acessar o GitHub. Confira a internet e o valor de `MATRACA_REF` (branch, tag ou commit existente). |
-| Higgs TTS 3 não inicia | O log mostra o final do `server.log` do servidor. Causas prováveis: falta de VRAM na L4, download dos pesos exigindo aceite de termos (defina `HF_TOKEN` no ambiente) ou a instalação isolada ter falhado. Os outros motores continuam funcionando. |
+| Um modelo não inicia ou a troca de modelo falha | A barra de progresso fica vermelha e mostra o erro. Os logs completos ficam em `engines/<motor>/install.log` (instalação do venv) e `engines/<motor>/worker.log` (carga do modelo). Nenhum modelo fica ativo após a falha: escolha outro ou tente novamente. |
+| Higgs TTS 3 não inicia | O log mostra o final do `server.log` do servidor (em `engines/higgs/`; a instalação fica em `install.log`). Causas prováveis: falta de VRAM na L4, download dos pesos exigindo aceite de termos (defina `HF_TOKEN` no ambiente) ou a instalação isolada ter falhado. Os outros motores continuam funcionando. |
 | Quero reabrir uma dublagem depois de reiniciar a página | As sessões ficam em `./sessoes/`. Abra a aba 🧩 e escolha a sessão. Se o runtime do Colab foi reiniciado, a pasta é perdida: copie `sessoes/` e `outputs/` para o Drive antes de encerrar. |
 
 ## Licença
