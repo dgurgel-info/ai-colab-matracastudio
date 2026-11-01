@@ -3,7 +3,7 @@
 Regras:
 * Só um motor fica ativo. Ao trocar, o anterior é fechado (o processo do worker termina e o sistema
   devolve a VRAM) *antes* de o novo ser instalado e iniciado.
-* Cada motor tem venv e dependências próprios (``venv_engine`` / ``higgs``); nada é instalado no
+* Cada motor tem venv e dependências próprios (``venv_engine``); nada é instalado no
   ambiente do notebook por causa de um motor.
 * Falha ao instalar ou iniciar não deixa nada pela metade: nenhum motor fica ativo.
 * ``progress(percentual, texto, até)`` alimenta a barra de progresso da interface durante a troca.
@@ -19,14 +19,12 @@ from typing import Callable, Dict, Optional, Tuple
 Log = Callable[[str], None]
 Progress = Callable[..., None]
 
-QWEN3, OMNIVOICE, HIGGS = "Qwen3-TTS", "OmniVoice", "Higgs TTS 3"
+QWEN3, OMNIVOICE = "Qwen3-TTS", "OmniVoice"
 
 
 def engine_name(choice) -> str:
     """Nome canônico a partir do rótulo da interface (ou do nome já canônico)."""
     text = str(choice)
-    if "Higgs" in text:
-        return HIGGS
     if "Qwen" in text:
         return QWEN3
     return OMNIVOICE
@@ -92,27 +90,8 @@ class EngineManager:
             progress(9, "Memória liberada.")
 
 
-def make_higgs_loader(root: str) -> Callable[..., object]:
-    def load(log: Log = print, progress: Optional[Progress] = None):
-        from matraca.engines.higgs import HiggsServer
-        progress = progress or _noop_progress
-        server = HiggsServer(workdir=os.path.join(root, "higgs"))
-        try:
-            if not server.installed():
-                progress(10, "Instalando o servidor do Higgs TTS 3 (só na primeira vez; vários minutos)...", 62)
-            server.ensure_installed(log)
-            progress(64, "Iniciando o Higgs TTS 3 (baixa o modelo na primeira vez)...", 97)
-            server.start(log)
-        except BaseException:
-            server.stop()
-            raise
-        return server
-    return load
-
-
 def build_manager(root: str, free_memory: Optional[Callable[[], None]] = None, log: Log = print) -> EngineManager:
-    """Gerenciador com os quatro motores, cada um no seu venv sob ``root``."""
+    """Gerenciador com os motores de voz, cada um no seu venv sob ``root``."""
     from matraca.engines.venv_engine import make_remote_loader
     loaders = {name: make_remote_loader(name, root) for name in (QWEN3, OMNIVOICE)}
-    loaders[HIGGS] = make_higgs_loader(root)
     return EngineManager(loaders, free_memory=free_memory, log=log)

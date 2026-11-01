@@ -106,7 +106,7 @@ class VenvWorker:
     def _run(self, cmd: List[str], log: Log, env: dict) -> str:
         log("$ " + " ".join(cmd))
         # Sessão própria: o SIGINT de "parar célula" do Colab vai ao grupo do kernel e mataria o instalador
-        # no meio (uma instalação do Higgs leva ~20 min e baixa ~12 GB).
+        # no meio (uma instalação pode levar vários minutos e baixar GBs).
         popen_kw = {"start_new_session": True} if os.name != "nt" else {}
         res = subprocess.run(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, **popen_kw)
         os.makedirs(self.dir, exist_ok=True)
