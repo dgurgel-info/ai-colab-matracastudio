@@ -97,7 +97,11 @@ class HiggsServer:
 
     def _run(self, cmd: List[str], log: Log, cwd: Optional[str] = None, env: Optional[dict] = None) -> str:
         log("$ " + " ".join(cmd))
-        res = subprocess.run(cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        # Sessão própria: o SIGINT de "parar célula" do Colab vai ao grupo do kernel e mataria o instalador
+        # no meio (uma instalação do Higgs leva ~20 min e baixa ~12 GB).
+        popen_kw = {"start_new_session": True} if os.name != "nt" else {}
+        res = subprocess.run(cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+                             **popen_kw)
         try:        # log completo da instalação: a mensagem de erro mostra só o final
             os.makedirs(self.workdir, exist_ok=True)
             with open(self.install_log_path, "a", encoding="utf-8") as fh:
@@ -125,6 +129,11 @@ class HiggsServer:
         if not os.path.isdir(self.repo_dir):
             self._run(["git", "clone", "--depth", "1", SGLANG_OMNI_REPO, self.repo_dir], log)
         env = self.clean_env()
+        if os.path.isdir(self.venv_dir):
+            # Venv incompleto (instalação interrompida ou que falhou): o uv recusa recriar sobre ele
+            # ("A virtual environment already exists"). Os wheels ficam no cache do uv, então refazer é rápido.
+            log("♻️ Removendo o ambiente incompleto do Higgs antes de recriar...")
+            shutil.rmtree(self.venv_dir, ignore_errors=True)
         self._run([uv, "venv", self.venv_dir, "-p", "3.12"], log, cwd=self.repo_dir, env=env)
         # O venv TEM de ser Python 3.12: as dependências (ex.: outlines-core) só têm wheel pré-compilada
         # até o 3.12; no 3.13 do Colab o pip tentaria compilar em Rust e falharia.

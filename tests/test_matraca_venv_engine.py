@@ -111,7 +111,7 @@ def test_worker_that_dies_on_startup_reports_its_log(tmp_path):
 
 # ------------------------------------------------------------------ instalação do venv (comandos simulados)
 def fake_run_factory(calls, py_version="3.12", fail_on=None):
-    def fake_run(cmd, env=None, stdout=None, stderr=None, text=None):
+    def fake_run(cmd, env=None, stdout=None, stderr=None, text=None, **kw):
         calls.append({"cmd": list(cmd), "env": env})
         if fail_on and fail_on in " ".join(cmd):
             return types.SimpleNamespace(returncode=1, stdout="error: can't find Rust compiler")

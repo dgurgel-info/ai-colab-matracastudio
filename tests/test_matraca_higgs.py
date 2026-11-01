@@ -116,7 +116,7 @@ def test_output_is_usable_by_the_part_session(tmp_path, ref):
 def fake_installer(monkeypatch, tmp_path, python_version="3.12"):
     calls = []
 
-    def fake_run(cmd, cwd=None, env=None, stdout=None, stderr=None, text=None):
+    def fake_run(cmd, cwd=None, env=None, stdout=None, stderr=None, text=None, **kw):
         calls.append({"cmd": list(cmd), "env": env})
         out = python_version + "\n" if "-c" in cmd else ""
         if "venv" in cmd:                                   # o uv cria o venv e o executável do servidor
@@ -216,3 +216,37 @@ def test_already_installed_server_still_gets_its_build_tools(monkeypatch, tmp_pa
     open(s.serve_bin, "w").close()                                   # venv de uma versão anterior, sem ninja
     s.ensure_installed(lambda m: None)
     assert calls and calls[0][-1] == "ninja" and "clone" not in " ".join(calls[0])
+
+
+def test_stale_venv_from_an_interrupted_install_is_removed_before_recreating(monkeypatch, tmp_path):
+    seen = {}
+
+    def fake_run(cmd, cwd=None, env=None, stdout=None, stderr=None, text=None, **kw):
+        if "venv" in cmd:
+            seen["stale_present_at_uv_venv"] = (stale / "lib" / "restos").exists()
+            venv = Path(cmd[cmd.index("venv") + 1])
+            (venv / "bin").mkdir(parents=True, exist_ok=True)
+            (venv / "bin" / "sgl-omni").write_text("")
+        return types.SimpleNamespace(returncode=0, stdout="3.12\n" if "-c" in cmd else "")
+
+    monkeypatch.setattr("matraca.engines.higgs.subprocess.run", fake_run)
+    monkeypatch.setattr("matraca.engines.higgs.shutil.which", lambda name, path=None: "/usr/bin/uv")
+    (tmp_path / "srv" / "sglang-omni").mkdir(parents=True)
+    stale = tmp_path / "srv" / "sglang-omni" / ".venv"
+    (stale / "lib").mkdir(parents=True)
+    (stale / "lib" / "restos").write_text("instalação pela metade")        # sem bin/sgl-omni: não conta como instalado
+    HiggsServer(workdir=str(tmp_path / "srv")).ensure_installed(lambda m: None)
+    assert seen["stale_present_at_uv_venv"] is False                     # o uv não encontra o venv antigo
+
+
+def test_installers_run_in_their_own_session_so_a_kernel_interrupt_does_not_kill_them(monkeypatch, tmp_path):
+    captured = []
+
+    def fake_run(cmd, **kw):
+        captured.append(kw)
+        return types.SimpleNamespace(returncode=0, stdout="")
+
+    monkeypatch.setattr("matraca.engines.higgs.subprocess.run", fake_run)
+    HiggsServer(workdir=str(tmp_path / "srv"))._run(["true"], lambda m: None)
+    if os.name != "nt":
+        assert captured[0].get("start_new_session") is True
