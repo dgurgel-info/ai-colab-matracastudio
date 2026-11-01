@@ -185,6 +185,26 @@ body, .gradio-container { background: var(--mt-bg) !important; }
 #parts-table th { font-weight: 700; }
 #part-text textarea { font-size: 1rem !important; line-height: 1.7 !important; }
 
+/* ---------- barra de progresso da troca de modelo (fixa no topo) ---------- */
+/* fixed (não sticky): o .gradio-container tem overflow:hidden, o que impede o sticky de acompanhar a rolagem */
+#engine-progress-slot { height: 0 !important; min-height: 0 !important; padding: 0 !important; margin: 0 !important; border: 0 !important; background: transparent !important; overflow: visible !important; }
+.mt-progress { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 1000;
+  width: min(920px, calc(100vw - 32px)); box-sizing: border-box; background: var(--mt-surface); border: 1px solid var(--mt-border-strong); border-radius: var(--mt-radius-sm);
+  box-shadow: var(--mt-shadow); padding: 10px 14px 12px; margin: 0; }
+.mt-progress-head { display: flex; justify-content: space-between; gap: 12px; font-size: .9rem; font-weight: 700; color: var(--mt-ink); }
+.mt-progress-pct { font-variant-numeric: tabular-nums; color: var(--mt-muted); }
+.mt-progress-track { height: 10px; margin-top: 8px; border-radius: 999px; background: var(--mt-surface-2); border: 1px solid var(--mt-border); overflow: hidden; }
+.mt-progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--mt-blue), var(--mt-green));
+  transition: width .6s ease; }
+.mt-progress.running .mt-progress-fill { background-size: 200% 100%; animation: mt-progress-shift 1.6s linear infinite; }
+.mt-progress.done { border-color: var(--mt-green-200); background: var(--mt-green-50); }
+.mt-progress.error { border-color: var(--mt-red-200); background: var(--mt-red-50); }
+.mt-progress.error .mt-progress-fill { background: var(--mt-red); }
+.mt-progress-detail { margin: 8px 0 0; padding: 0; background: transparent; border: 0; font: .76rem/1.4 var(--mt-mono);
+  color: var(--mt-muted); white-space: pre-wrap; max-height: 5.6em; overflow: hidden; }
+@keyframes mt-progress-shift { from { background-position: 0 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .mt-progress-fill { transition: none; animation: none !important; } }
+
 /* ---------- responsivo ---------- */
 @media (max-width: 980px) {
   .gradio-container { padding: 14px !important; }

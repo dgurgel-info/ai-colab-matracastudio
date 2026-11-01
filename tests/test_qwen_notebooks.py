@@ -3,10 +3,12 @@
 Execute com Python + numpy + torch: python -m unittest discover -s tests -v
 """
 import ast
+import contextlib
 import gc
 import json
 from pathlib import Path
 import re
+import sys
 import time
 import unittest
 from types import SimpleNamespace
@@ -15,6 +17,8 @@ import numpy as np
 import torch
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from matraca.engines.rpc import ACTIVE_SEED  # noqa: E402
 
 
 def notebook_namespace(label):
@@ -22,11 +26,11 @@ def notebook_namespace(label):
     engine = ''.join(nb['cells'][3]['source'])
     parsed = ast.parse(engine)
     names = {'limit_audio_peak', 'fade_audio_edges', 'split_text_into_chunks',
-             'generate_qwen3_tts_chunked_stream', 'generate_qwen3_tts_chunked'}
+             'generate_qwen3_tts_chunked_stream', 'generate_qwen3_tts_chunked', 'seeded_generation'}
     nodes = [n for n in parsed.body if isinstance(n, ast.FunctionDef) and n.name in names]
     nodes += [n for n in parsed.body if isinstance(n, ast.Assign)
               and any(isinstance(t, ast.Name) and t.id == 'QWEN_LANGUAGES' for t in n.targets)]
-    namespace = dict(torch=torch, np=np, re=re, gc=gc, time=time,
+    namespace = dict(torch=torch, np=np, re=re, gc=gc, time=time, contextlib=contextlib, ACTIVE_SEED=ACTIVE_SEED,
                      trim_qwen_nonspeech_edges=lambda t: t, is_stop_requested=lambda: False, print=lambda *a, **k: None)
     exec(compile(ast.Module(body=nodes, type_ignores=[]), label, 'exec'), namespace)
     return nb, namespace

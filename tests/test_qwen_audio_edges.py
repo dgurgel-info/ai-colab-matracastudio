@@ -52,22 +52,18 @@ class AudioEdgesTests(unittest.TestCase):
                     ns['trim_qwen_nonspeech_edges'](torch.randn(1, 48000))
 
     def test_precision_requires_native_bf16_hardware(self):
-        for label in ('T4', 'L4'):
-            nb = json.loads((ROOT / f'Matraca_Studio_{label}.ipynb').read_text(encoding='utf-8'))
-            tree = ast.parse(''.join(nb['cells'][2]['source']))
-            assignment = next(n for n in ast.walk(tree) if isinstance(n, ast.Assign)
-                              and any(isinstance(t, ast.Name) and t.id == 'qwen_dtype'
-                                      for t in n.targets))
-            expression = compile(ast.Expression(body=assignment.value), label, 'eval')
-            for available, capability, expected in [(True, (7, 5), torch.float16),
-                                                    (True, (8, 9), torch.bfloat16),
-                                                    (False, None, torch.float32)]:
-                cuda = SimpleNamespace(is_available=lambda: available,
-                                       get_device_capability=lambda: capability)
-                fake = SimpleNamespace(cuda=cuda, bfloat16=torch.bfloat16)
-                actual = eval(expression, dict(torch=fake,
-                              dtype=torch.float16 if available else torch.float32))
-                self.assertEqual(actual, expected)
+        # a regra mora no worker do Qwen3-TTS (roda no venv dele), não mais na célula do notebook
+        tree = ast.parse((ROOT / 'matraca' / 'engines' / 'worker.py').read_text(encoding='utf-8'))
+        loader = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'load_qwen3')
+        assignment = next(n for n in ast.walk(loader) if isinstance(n, ast.Assign)
+                          and any(isinstance(t, ast.Name) and t.id == 'dtype' for t in n.targets))
+        expression = compile(ast.Expression(body=assignment.value), 'worker.load_qwen3', 'eval')
+        for available, capability, expected in [(True, (7, 5), torch.float16),
+                                                (True, (8, 9), torch.bfloat16),
+                                                (False, None, torch.float32)]:
+            fake = SimpleNamespace(cuda=SimpleNamespace(get_device_capability=lambda: capability),
+                                   bfloat16=torch.bfloat16, float16=torch.float16, float32=torch.float32)
+            self.assertEqual(eval(expression, dict(torch=fake, cuda=available)), expected)
 
 
 if __name__ == '__main__':
