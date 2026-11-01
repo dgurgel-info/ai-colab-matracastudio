@@ -77,11 +77,33 @@ class HiggsServer:
     def serve_bin(self) -> str:
         return os.path.join(self.venv_dir, "bin", "sgl-omni")
 
-    def _run(self, cmd: List[str], log: Log, cwd: Optional[str] = None, env: Optional[dict] = None) -> None:
+    @property
+    def venv_python(self) -> str:
+        return os.path.join(self.venv_dir, "bin", "python")
+
+    @property
+    def install_log_path(self) -> str:
+        return os.path.join(self.workdir, "install.log")
+
+    @staticmethod
+    def clean_env() -> dict:
+        """Ambiente sem as variáveis do Colab que fariam o uv ignorar o venv (UV_SYSTEM_PYTHON, VIRTUAL_ENV...)."""
+        drop = ("VIRTUAL_ENV", "PYTHONPATH", "PYTHONHOME", "CONDA_PREFIX")
+        return {k: v for k, v in os.environ.items() if not k.startswith("UV_") and k not in drop}
+
+    def _run(self, cmd: List[str], log: Log, cwd: Optional[str] = None, env: Optional[dict] = None) -> str:
         log("$ " + " ".join(cmd))
         res = subprocess.run(cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        try:        # log completo da instalação: a mensagem de erro mostra só o final
+            os.makedirs(self.workdir, exist_ok=True)
+            with open(self.install_log_path, "a", encoding="utf-8") as fh:
+                fh.write(f"$ {' '.join(cmd)}\n{res.stdout}\n[exit {res.returncode}]\n")
+        except OSError:
+            pass
         if res.returncode != 0:
-            raise HiggsError(f"Comando falhou ({res.returncode}): {' '.join(cmd)}\n{res.stdout[-1200:]}")
+            raise HiggsError(f"Comando falhou ({res.returncode}): {' '.join(cmd)}\n{res.stdout[-2500:]}\n"
+                             f"(log completo: {self.install_log_path})")
+        return res.stdout
 
     def installed(self) -> bool:
         return os.path.exists(self.serve_bin)
@@ -97,9 +119,18 @@ class HiggsServer:
         uv = shutil.which("uv") or os.path.join(os.path.dirname(sys.executable), "uv")
         if not os.path.isdir(self.repo_dir):
             self._run(["git", "clone", "--depth", "1", SGLANG_OMNI_REPO, self.repo_dir], log)
-        self._run([uv, "venv", self.venv_dir, "-p", "3.12"], log, cwd=self.repo_dir)
-        env = dict(os.environ, VIRTUAL_ENV=self.venv_dir)
-        self._run([uv, "pip", "install", "-e", "."], log, cwd=self.repo_dir, env=env)
+        env = self.clean_env()
+        self._run([uv, "venv", self.venv_dir, "-p", "3.12"], log, cwd=self.repo_dir, env=env)
+        # O venv TEM de ser Python 3.12: as dependências (ex.: outlines-core) só têm wheel pré-compilada
+        # até o 3.12; no 3.13 do Colab o pip tentaria compilar em Rust e falharia.
+        version = self._run([self.venv_python, "-c", "import sys; print('%d.%d' % sys.version_info[:2])"],
+                            log, env=env).strip()
+        if version != "3.12":
+            raise HiggsError(f"O ambiente isolado do Higgs deveria usar Python 3.12, mas usa {version}.")
+        # --python força o uv a instalar NO venv (nunca no Python do Colab); --prerelease=allow é exigido
+        # pelo sglang-omni (flash-attn-4 em beta), como na documentação oficial.
+        self._run([uv, "pip", "install", "--python", self.venv_python, "--prerelease=allow", "-e", "."],
+                  log, cwd=self.repo_dir, env=env)
         if not self.installed():
             raise HiggsError("A instalação terminou, mas o executável sgl-omni não foi encontrado.")
 

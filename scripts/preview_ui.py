@@ -202,10 +202,25 @@ def main():
     ns["device"], ns["dtype"] = "cpu", torch.float32
     ns["current_tts_model_name"], ns["active_tts_model"] = None, None
 
-    def load_tts_model(choice):
+    ns["engine_manager"] = types.SimpleNamespace(name=None, model=None)     # o Passo 2 real exige GPU
+
+    def load_tts_model(choice, log=print, progress=None):
+        import time
         c = str(choice)
         name = ("VoxCPM2" if "VoxCPM" in c else "Higgs TTS 3" if "Higgs" in c
                 else "Qwen3-TTS" if "Qwen" in c else "OmniVoice")
+        progress = progress or (lambda *a, **k: None)
+        previous = ns["engine_manager"].name
+        if previous and previous != name:                          # simula a troca para ver a barra de progresso
+            progress(4, f"Descarregando {previous} da memória...", 9)
+            time.sleep(1.2)
+        for pct, label in ((12, "Criando o ambiente isolado..."), (30, "Instalando as dependências..."),
+                           (66, f"Iniciando {name}..."), (92, "Carregando pesos...")):
+            progress(pct, label)
+            log(f"[prévia] {label}")
+            time.sleep(1.0)
+        ns["engine_manager"].name, ns["engine_manager"].model = name, models[name]
+        progress(100, f"{name} pronto.")
         return name, models[name]
 
     ns["load_tts_model"] = load_tts_model

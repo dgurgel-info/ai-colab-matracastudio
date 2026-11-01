@@ -61,3 +61,25 @@ def render_header(engine_label: str = "", gpu_label: Optional[str] = None, versi
         "<p class='matraca-subtitle'>Dublagem e clonagem de voz com IA · voz coerente, parte por parte</p></div></div>"
         f"<div class='mt-pills'>{''.join(pills)}</div></div>"
     )
+
+
+def render_engine_progress(pct: Optional[float] = None, label: str = "", detail: str = "",
+                           state: str = "running") -> str:
+    """Barra fixa no topo durante a troca de modelo. ``pct=None`` esconde a barra (estado ocioso).
+
+    ``state``: running | done | error. O texto vem do gerenciador de motores, nunca de entrada do usuário,
+    mas é escapado de qualquer forma.
+    """
+    if pct is None:
+        return ""
+    import html
+    value = max(0, min(100, int(round(pct))))
+    detail_html = f"<pre class='mt-progress-detail'>{html.escape(detail)}</pre>" if detail else ""
+    return (
+        f"<div class='mt-progress {html.escape(state)}' role='progressbar' aria-valuemin='0' aria-valuemax='100' "
+        f"aria-valuenow='{value}' aria-label='{html.escape(label)}'>"
+        f"<div class='mt-progress-head'><span class='mt-progress-label'>{html.escape(label)}</span>"
+        f"<span class='mt-progress-pct'>{value}%</span></div>"
+        f"<div class='mt-progress-track'><div class='mt-progress-fill' style='width:{value}%'></div></div>"
+        f"{detail_html}</div>"
+    )

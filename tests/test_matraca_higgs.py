@@ -2,6 +2,7 @@
 import os
 import socket
 import sys
+import types
 from pathlib import Path
 
 import numpy as np
@@ -109,3 +110,55 @@ def test_output_is_usable_by_the_part_session(tmp_path, ref):
         assert dsp.loudness_lufs(audio, 24000) > -60
     finally:
         s.stop()
+
+
+# ------------------------------------------------------------------ instalação (comandos simulados, sem rede)
+def fake_installer(monkeypatch, tmp_path, python_version="3.12"):
+    calls = []
+
+    def fake_run(cmd, cwd=None, env=None, stdout=None, stderr=None, text=None):
+        calls.append({"cmd": list(cmd), "env": env})
+        out = python_version + "\n" if "-c" in cmd else ""
+        if "venv" in cmd:                                   # o uv cria o venv e o executável do servidor
+            venv = Path(cmd[cmd.index("venv") + 1])
+            (venv / "bin").mkdir(parents=True, exist_ok=True)
+            (venv / "bin" / "sgl-omni").write_text("")
+        return types.SimpleNamespace(returncode=0, stdout=out)
+
+    monkeypatch.setattr("matraca.engines.higgs.subprocess.run", fake_run)
+    monkeypatch.setattr("matraca.engines.higgs.shutil.which", lambda name: "/usr/bin/uv")
+    (tmp_path / "srv" / "sglang-omni").mkdir(parents=True)             # repositório "já clonado"
+    return calls
+
+
+def test_install_targets_the_venv_python_and_ignores_colab_uv_env(monkeypatch, tmp_path):
+    calls = fake_installer(monkeypatch, tmp_path)
+    monkeypatch.setenv("UV_SYSTEM_PYTHON", "1")
+    monkeypatch.setenv("VIRTUAL_ENV", "/usr/local")
+    s = HiggsServer(workdir=str(tmp_path / "srv"))
+    s.ensure_installed(lambda m: None)
+    install = next(c for c in calls if "pip" in c["cmd"] and "install" in c["cmd"])
+    cmd = install["cmd"]
+    assert cmd[cmd.index("--python") + 1] == s.venv_python          # nunca o Python do sistema
+    assert "--prerelease=allow" in cmd and cmd[-2:] == ["-e", "."]
+    assert all(c["env"] is not None and "UV_SYSTEM_PYTHON" not in c["env"] and "VIRTUAL_ENV" not in c["env"]
+               for c in calls)
+
+
+def test_install_refuses_a_venv_that_is_not_python_312(monkeypatch, tmp_path):
+    fake_installer(monkeypatch, tmp_path, python_version="3.13")
+    with pytest.raises(HiggsError, match="3.12"):
+        HiggsServer(workdir=str(tmp_path / "srv")).ensure_installed(lambda m: None)
+
+
+def test_install_failure_keeps_the_full_log(monkeypatch, tmp_path):
+    def failing(cmd, **kw):
+        return types.SimpleNamespace(returncode=1, stdout="x" * 5000 + "error: can't find Rust compiler")
+
+    monkeypatch.setattr("matraca.engines.higgs.subprocess.run", failing)
+    monkeypatch.setattr("matraca.engines.higgs.shutil.which", lambda name: "/usr/bin/uv")
+    (tmp_path / "srv" / "sglang-omni").mkdir(parents=True)
+    s = HiggsServer(workdir=str(tmp_path / "srv"))
+    with pytest.raises(HiggsError, match="Rust compiler"):
+        s.ensure_installed(lambda m: None)
+    assert "Rust compiler" in Path(s.install_log_path).read_text(encoding="utf-8")

@@ -200,10 +200,11 @@ class HiggsNotebookTests(unittest.TestCase):
         ui = {l: ''.join(nb[l]['cells'][4]['source']) for l in nb}
         self.assertEqual(ui['L4'].count('🧪 Higgs TTS 3 4B'), 2)          # diálogo de dublagem e clonagem livre
         self.assertNotIn('🧪 Higgs', ui['T4'])
-        loader = ''.join(nb['L4']['cells'][2]['source'])
-        self.assertIn("target_name = 'Higgs TTS 3'", loader)
-        self.assertIn('active_tts_model.close()', loader)                 # troca de motor derruba o servidor
-        self.assertNotIn('Higgs TTS 3', ''.join(nb['T4']['cells'][2]['source']))
+        step2 = ''.join(nb['L4']['cells'][2]['source'])
+        self.assertIn('engine_manager = build_manager(', step2)             # o gerenciador registra os 4 motores
+        from matraca.engines.manager import build_manager
+        self.assertIn('Higgs TTS 3', build_manager('x').loaders)
+        self.assertNotIn('Higgs', step2.replace('build_manager', ''))
 
     def test_generation_resamples_to_24k_and_forwards_seed(self):
         ns = engine_namespace('L4')
