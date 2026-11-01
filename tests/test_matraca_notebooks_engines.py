@@ -24,14 +24,13 @@ class OneEngineAtATimeNotebookTests(unittest.TestCase):
                 self.assertNotIn(engine_package, body, (label, engine_package))
             self.assertIn('openai-whisper', body)
             self.assertIn('uv', body.split())                                   # gerencia os venvs
-            self.assertNotIn('higgs_audio_v2_tokenizer', step1, label)
 
     def test_step2_loads_only_whisper_and_builds_the_manager(self):
         for label, nb in self.each():
             step2 = nb[2]
             self.assertIn('engine_manager = build_manager(', step2, label)
             self.assertNotIn("load_tts_model('", step2, label)                  # nenhum motor no Passo 2
-            for forbidden in ('from voxcpm', 'from qwen_tts', 'from omnivoice', 'transformers.', 'HiggsAudioV2'):
+            for forbidden in ('from voxcpm', 'from qwen_tts', 'from omnivoice', 'transformers.'):
                 self.assertNotIn(forbidden, step2, (label, forbidden))
             self.assertIn('def load_tts_model(model_choice, log=print, progress=None):', step2)
 
@@ -55,9 +54,6 @@ class OneEngineAtATimeNotebookTests(unittest.TestCase):
             self.assertLess(step4.index(bar), step4.index('gr.HTML(render_header('), label)   # barra acima do cabeçalho
 
 
-if __name__ == '__main__':
-    unittest.main()
-
 
 class VoxCPM2RemovedTests(unittest.TestCase):
     """O VoxCPM2 saiu do projeto: nenhum vestígio nos notebooks e Qwen3-TTS é o motor inicial."""
@@ -67,9 +63,25 @@ class VoxCPM2RemovedTests(unittest.TestCase):
             text = (ROOT / f'Matraca_Studio_{label}.ipynb').read_text(encoding='utf-8').lower()
             self.assertNotIn('voxcpm', text, label)
 
-    def test_l4_offers_three_engines_with_qwen_as_default(self):
+    def test_l4_offers_two_engines_with_qwen_as_default(self):
         step4 = cells('L4')[4]
-        self.assertEqual(step4.count('🧪 Higgs TTS 3 4B'), 2)                  # dublagem e clonagem livre
         self.assertEqual(step4.count('⚡ Qwen3-TTS 1.7B'), 4)                  # opção + valor inicial, nos dois seletores
         self.assertEqual(step4.count("value='⚡ Qwen3-TTS 1.7B"), 2)
-        self.assertIn("MATRACA_ENGINE_LABEL = 'Qwen3-TTS · OmniVoice · Higgs TTS 3'", step4)
+        self.assertEqual(step4.count('🎙️ OmniVoice (k2-fsa'), 2)
+        self.assertIn("MATRACA_ENGINE_LABEL = 'Qwen3-TTS · OmniVoice'", step4)
+
+
+class HiggsRemovedTests(unittest.TestCase):
+    """O Higgs TTS 3 saiu do projeto: nenhum vestígio no código nem nos notebooks."""
+
+    def test_no_trace_of_higgs(self):
+        for label in ('L4', 'T4'):
+            text = (ROOT / f'Matraca_Studio_{label}.ipynb').read_text(encoding='utf-8').lower()
+            self.assertNotIn('higgs', text, label)
+        for path in (ROOT / 'matraca').rglob('*.py'):
+            self.assertNotIn('higgs', path.read_text(encoding='utf-8').lower(), str(path))
+        self.assertFalse((ROOT / 'matraca' / 'engines' / 'higgs.py').exists())
+
+
+if __name__ == '__main__':
+    unittest.main()

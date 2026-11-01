@@ -30,7 +30,7 @@ def make_manager(events, fail=None):
             return models[name]
         return _load
 
-    names = [mgr.QWEN3, mgr.OMNIVOICE, mgr.HIGGS]
+    names = [mgr.QWEN3, mgr.OMNIVOICE]
     manager = EngineManager({n: loader(n) for n in names}, free_memory=lambda: events.append("free"),
                             log=lambda m: None)
     return manager, models
@@ -38,9 +38,8 @@ def make_manager(events, fail=None):
 
 def test_engine_name_accepts_ui_labels_and_canonical_names():
     assert engine_name("⚡ Qwen3-TTS 1.7B (Alibaba)") == mgr.QWEN3
-    assert engine_name("🧪 Higgs TTS 3 4B (Boson AI)") == mgr.HIGGS
     assert engine_name("🎙️ OmniVoice (k2-fsa)") == mgr.OMNIVOICE
-    assert engine_name("Higgs TTS 3") == mgr.HIGGS
+    assert engine_name("Qwen3-TTS") == mgr.QWEN3
 
 
 def test_switch_unloads_previous_before_loading_next():
@@ -82,21 +81,21 @@ def test_failed_load_leaves_nothing_resident():
 def test_unload_closes_worker_and_is_safe_to_repeat():
     events = []
     manager, models = make_manager(events)
-    manager.activate("Higgs")
+    manager.activate("Qwen3-TTS")
     manager.unload()
     manager.unload()
-    assert models["Higgs TTS 3"].closed is True
+    assert models["Qwen3-TTS"].closed is True
     assert events.count("free") == 1
 
 
 def test_close_error_does_not_block_unload():
     events = []
     manager, models = make_manager(events)
-    manager.activate("Higgs")
+    manager.activate("Qwen3-TTS")
 
     def boom():
         raise OSError("servidor já morreu")
-    models["Higgs TTS 3"].close = boom
+    models["Qwen3-TTS"].close = boom
     manager.unload()
     assert manager.model is None and "free" in events
 
@@ -131,6 +130,6 @@ def test_already_loaded_engine_reports_ready_immediately():
     assert steps == [100] and events.count("load:OmniVoice") == 1
 
 
-def test_build_manager_registers_all_four_engines(tmp_path):
+def test_build_manager_registers_the_engines(tmp_path):
     m = mgr.build_manager(str(tmp_path))
-    assert set(m.loaders) == {mgr.QWEN3, mgr.OMNIVOICE, mgr.HIGGS}
+    assert set(m.loaders) == {mgr.QWEN3, mgr.OMNIVOICE}

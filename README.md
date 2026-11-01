@@ -1,7 +1,7 @@
 # 🎙️ Matraca Studio — Dublagem e Clonagem de Voz
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)
-![Modelos](https://img.shields.io/badge/Modelos-Qwen3--TTS%20%7C%20OmniVoice%20%7C%20Higgs%20TTS%203-brightgreen.svg)
+![Modelos](https://img.shields.io/badge/Modelos-Qwen3--TTS%20%7C%20OmniVoice-brightgreen.svg)
 [![Testes](https://github.com/dgurgel-info/ai-colab-matracastudio/actions/workflows/tests.yml/badge.svg)](https://github.com/dgurgel-info/ai-colab-matracastudio/actions/workflows/tests.yml)
 ![Interface](https://img.shields.io/badge/Interface-Gradio-orange.svg)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-yellow.svg)
@@ -10,18 +10,18 @@ O **Matraca Studio** transcreve, traduz, dubla e clona vozes a partir de áudio 
 
 O foco desta versão é **dublar vídeos para o YouTube com a mesma voz do começo ao fim**: o roteiro é gerado em partes que mantêm referência, prompt e semente, as partes que destoam são refeitas, e qualquer uma pode ser ouvida, corrigida e remontada depois sem refazer o resto. O áudio final sai masterizado (-14 LUFS, 48 kHz / 24 bits).
 
-**Sumário:** [Notebooks](#escolha-o-notebook-correto) · [Modelos](#modelos-de-voz) · [Funcionalidades](#funcionalidades) · [Executar no Colab](#como-executar-no-google-colab) · [Fluxo de uso](#fluxo-de-uso) · [Voz coerente, parte por parte](#voz-coerente-parte-por-parte) · [Higgs TTS 3](#higgs-tts-3-4b-experimental-l4) · [Prévia local](#prévia-local-da-interface-sem-gpu) · [Testes](#testes) · [Solução de problemas](#solução-de-problemas) · [Licença](#licença)
+**Sumário:** [Notebooks](#escolha-o-notebook-correto) · [Modelos](#modelos-de-voz) · [Funcionalidades](#funcionalidades) · [Executar no Colab](#como-executar-no-google-colab) · [Fluxo de uso](#fluxo-de-uso) · [Voz coerente, parte por parte](#voz-coerente-parte-por-parte) · [Prévia local](#prévia-local-da-interface-sem-gpu) · [Testes](#testes) · [Solução de problemas](#solução-de-problemas) · [Licença](#licença)
 
 ## Escolha o notebook correto
 
 | Notebook | GPU indicada | Modelos disponíveis | Quando usar |
 | :--- | :--- | :--- | :--- |
 | [Matraca_Studio_T4.ipynb](Matraca_Studio_T4.ipynb) | NVIDIA T4 | Qwen3-TTS 1.7B e OmniVoice | Versão mais leve para sessões T4 e fluxo padrão de dublagem. |
-| [Matraca_Studio_L4.ipynb](Matraca_Studio_L4.ipynb) | NVIDIA L4, 24 GB | Qwen3-TTS 1.7B, OmniVoice e Higgs TTS 3 4B (experimental) | Versão com todos os modelos, aproveitando os 24 GB de VRAM. |
+| [Matraca_Studio_L4.ipynb](Matraca_Studio_L4.ipynb) | NVIDIA L4, 24 GB | Qwen3-TTS 1.7B e OmniVoice | Versão para a GPU de 24 GB, com mais margem de VRAM que a T4. |
 
 ### Por que usar a L4?
 
-A versão L4 roda na GPU de 24 GB, o que dá margem para o Whisper, o modelo de voz e o processamento de áudio, e inclui o **Higgs TTS 3 4B** (experimental). O **Qwen3-TTS 1.7B** é o motor inicial, com clonagem de alta fidelidade para 9 idiomas.
+A versão L4 roda na GPU de 24 GB, o que dá margem para o Whisper, o modelo de voz e o processamento de áudio. O **Qwen3-TTS 1.7B** é o motor inicial, com clonagem de alta fidelidade para 9 idiomas.
 
 > A melhor qualidade depende de uma referência limpa de voz. Prefira uma fala isolada, sem música, de 5 a 15 segundos, e revise a transcrição quando usar clonagem Hi-Fi.
 
@@ -31,7 +31,6 @@ A versão L4 roda na GPU de 24 GB, o que dá margem para o Whisper, o modelo de 
 | :--- | :--- | :--- |
 | **Qwen3-TTS 1.7B** | T4 e L4 | Motor inicial; alta expressividade e clonagem para 9 idiomas. |
 | **OmniVoice** | T4 e L4 | Alternativa leve, rápida e com suporte a Árabe. |
-| **Higgs TTS 3 4B** 🧪 | L4 | Experimental. Roda num servidor isolado (SGLang-Omni, Python 3.12) instalado só quando você o escolhe. **Licença não comercial**: veja abaixo. |
 
 O aplicativo mantém somente **um motor de TTS por vez**, e **cada motor roda no próprio ambiente (venv)**, criado com `uv` na primeira vez em que você o seleciona (Qwen3-TTS e OmniVoice têm dependências que se contradizem, então não dividem bibliotecas). Ao selecionar outro modelo na interface, o processo do anterior é encerrado, a VRAM volta inteira, e o novo é preparado e iniciado. Uma **barra de progresso fixa no topo** mostra cada etapa (descarregar, criar o ambiente, instalar, baixar e iniciar). O ambiente fica em `engines/` e é reaproveitado enquanto a sessão do Colab existir; a primeira seleção de cada modelo leva alguns minutos.
 
@@ -72,7 +71,6 @@ As regressões de código e junções podem ser executadas sem pesos de IA com `
 | :--- | :--- |
 | **Qwen3-TTS** | Português Brasileiro, Inglês, Espanhol, Francês, Alemão, Chinês Mandarim, Italiano, Japonês e Russo. |
 | **OmniVoice** | Os nove idiomas do Qwen3-TTS, além de Árabe. |
-| **Higgs TTS 3 (L4, experimental)** | 11 idiomas na interface (Português Brasileiro, Inglês, Espanhol, Francês, Alemão, Chinês Mandarim, Italiano, Japonês, Russo, Árabe e Hindi); o modelo cobre 100+ idiomas. |
 
 ## Como executar no Google Colab
 
@@ -106,7 +104,7 @@ Abra diretamente a versão adequada à sua GPU:
 1. [![Abrir Matraca Studio L4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_L4.ipynb)
 2. Em **Ambiente de execução → Alterar tipo de ambiente de execução**, selecione **L4 GPU**.
 3. Execute as células do **Passo 1** ao **Passo 4** em ordem. A primeira vez que você seleciona cada modelo, o notebook cria o venv dele e baixa os pesos, o que pode levar alguns minutos.
-4. Na interface, o **Qwen3-TTS** é o motor inicial; selecione OmniVoice quando precisar de um modelo mais leve. O **Higgs TTS 3** é experimental (veja a seção própria).
+4. Na interface, o **Qwen3-TTS** é o motor inicial; selecione OmniVoice quando precisar de um modelo mais leve.
 5. Use o **Passo 5** para criar o ZIP final.
 
 ## Fluxo de uso
@@ -125,7 +123,7 @@ Para clonagem livre, abra a aba **Clonagem livre**, envie a referência de voz, 
 
 ## Voz coerente, parte por parte
 
-Cada idioma é dublado em **partes** (≈600 caracteres, sentenças inteiras; 400 no Higgs). Os padrões já vêm ajustados para vídeos do YouTube e não aparecem na tela:
+Cada idioma é dublado em **partes** (≈600 caracteres, sentenças inteiras). Os padrões já vêm ajustados para vídeos do YouTube e não aparecem na tela:
 
 | O que garante a mesma voz | Como |
 | :--- | :--- |
@@ -147,15 +145,6 @@ Depois da dublagem, abra a aba para **ouvir cada parte**, editar o texto, **rege
 - Partes menores podem soar diferentes entre si em alguns idiomas; é por isso que o QC compara cada parte com as demais e a revisão existe. Para o Qwen3-TTS, trechos longos continuam sendo o perfil aprovado: aumente o tamanho das partes se notar trocas de timbre.
 - Com 1 ou 2 partes não há com o que comparar, então o QC relativo não é aplicado.
 
-## Higgs TTS 3 4B (experimental, L4)
-
-Modelo da [Boson AI](https://huggingface.co/bosonai/higgs-tts-3-4b) com clonagem zero-shot em 100+ idiomas. Não tem API Python local: o notebook instala o servidor SGLang-Omni num ambiente separado (`uv`, Python 3.12) **na primeira vez que você escolhe o modelo** e o encerra ao trocar de motor, para liberar a VRAM.
-
-- **Não testado em GPU L4.** A ficha do modelo só confirma A100 40 GB; a placa de 24 GB é "relatada, não verificada". Se faltar memória, o erro do servidor aparece no log e os outros motores continuam funcionando.
-- A API não documenta semente: o app tenta enviá-la e, se o servidor recusar, segue sem ela (a geração então não é reprodutível; o QC e a revisão continuam valendo).
-- Se o download exigir aceite de termos, defina `HF_TOKEN` no ambiente do Colab (`os.environ['HF_TOKEN'] = ...`) antes de iniciar. Nunca cole tokens em células salvas.
-- **Licença: [Boson Higgs TTS 3 Research and Non-Commercial](https://huggingface.co/bosonai/higgs-tts-3-4b/blob/main/LICENSE).** A *Creator Use Grant* permite monetizar vídeos em canais próprios **com atribuição**; o relatório final já traz o texto (`This audio was created with Boson AI's Higgs Audio — https://www.boson.ai/higgs-audio`). Hospedar como serviço/produto exige licença comercial, e só é permitido clonar vozes com consentimento.
-
 ## Prévia local da interface (sem GPU)
 
 ```bash
@@ -173,25 +162,24 @@ pip install -r requirements-dev.txt   # e o ffmpeg no PATH
 python -m pytest -q tests
 ```
 
-Os testes rodam sem GPU e sem baixar modelos: DSP validado contra o `ebur128` do ffmpeg, sessões e QC com um motor que reproduz o defeito de timbre, montagem/sincronização/masterização, interface e o cliente do Higgs contra um servidor falso. O CI do GitHub roda a mesma suíte.
+Os testes rodam sem GPU e sem baixar modelos: DSP validado contra o `ebur128` do ffmpeg, sessões e QC com um motor que reproduz o defeito de timbre, montagem/sincronização/masterização, interface e os workers dos motores contra um modelo falso. O CI do GitHub roda a mesma suíte.
 
 ## Estrutura do projeto
 
 ```text
 ai-colab-matracastudio/
 ├── Matraca_Studio_T4.ipynb      # Notebook para GPU T4: Qwen3-TTS e OmniVoice
-├── Matraca_Studio_L4.ipynb      # Notebook para GPU L4: Qwen3-TTS, OmniVoice e Higgs TTS 3
+├── Matraca_Studio_L4.ipynb      # Notebook para GPU L4: Qwen3-TTS e OmniVoice
 ├── matraca/                     # Núcleo compartilhado pelos dois notebooks (clonado no Passo 1)
 │   ├── dsp.py                   # Loudness BS.1770, medidas de voz, stretch, masterização
 │   ├── parts.py, qc.py          # Divisão em partes e controle de qualidade
 │   ├── session.py, timeline.py  # Sessão por partes (takes, regeneração), intro/outro e montagem
 │   ├── dubbing.py               # Orquestração independente do motor
-│   ├── engines/                 # Motores: gerenciador (um por vez), workers por venv e Higgs TTS 3
-│   │   ├── manager.py, venv_engine.py, worker.py, rpc.py, higgs.py
+│   ├── engines/                 # Motores: gerenciador (um por vez), workers por venv
+│   │   ├── manager.py, venv_engine.py, worker.py, rpc.py
 │   └── ui/                      # Tema/CSS e aba Revisão por partes
 ├── scripts/preview_ui.py        # Prévia local da interface sem GPU
 ├── tests/                       # Testes automatizados
-├── higgs_audio_v2_tokenizer.py  # Ponte de compatibilidade do OmniVoice
 ├── README.md                    # Esta documentação
 ├── LICENSE                      # Licença MIT
 └── .gitignore
@@ -209,7 +197,6 @@ O Passo 4 abre a interface com um link público `gradio.live` **sem senha**. Que
 | Uma parte soa diferente das outras | Abra a aba 🧩, ouça a parte, use **Regenerar (nova variação)** ou escolha outro *take*, e **Remontar o áudio final**. Com o Qwen3-TTS, partes maiores tendem a manter melhor o timbre. |
 | *"Não foi possível baixar o núcleo do Matraca"* no Passo 1 | O Colab precisa acessar o GitHub. Confira a internet e o valor de `MATRACA_REF` (branch, tag ou commit existente). |
 | Um modelo não inicia ou a troca de modelo falha | A barra de progresso fica vermelha e mostra o erro. Os logs completos ficam em `engines/<motor>/install.log` (instalação do venv) e `engines/<motor>/worker.log` (carga do modelo). Nenhum modelo fica ativo após a falha: escolha outro ou tente novamente. |
-| Higgs TTS 3 não inicia | O log mostra o final do `server.log` do servidor (em `engines/higgs/`; a instalação fica em `install.log`). Causas prováveis: falta de VRAM na L4, download dos pesos exigindo aceite de termos (defina `HF_TOKEN` no ambiente) ou a instalação isolada ter falhado. Os outros motores continuam funcionando. |
 | Quero reabrir uma dublagem depois de reiniciar a página | As sessões ficam em `./sessoes/`. Abra a aba 🧩 e escolha a sessão. Se o runtime do Colab foi reiniciado, a pasta é perdida: copie `sessoes/` e `outputs/` para o Drive antes de encerrar. |
 
 ## Licença

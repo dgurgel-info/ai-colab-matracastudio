@@ -46,7 +46,6 @@ MODEL_REPOS = (
 REPO_FILES = (
     "Matraca_Studio_L4.ipynb",
     "Matraca_Studio_T4.ipynb",
-    "higgs_audio_v2_tokenizer.py",
     # Núcleo compartilhado (partes, QC, montagem, masterização e interface)
     "matraca/__init__.py",
     "matraca/dsp.py",
