@@ -168,6 +168,9 @@ class HiggsServer:
             prefix.append(os.path.join(cuda_home, "bin"))
         env["PATH"] = os.pathsep.join(prefix + [env.get("PATH", "")])
         env["VIRTUAL_ENV"] = self.venv_dir
+        # O sglang-omni aborta se um estágio ficar 600 s (padrão) sem progresso. Na primeira partida o
+        # tts_frontend baixa pesos/codec e o flashinfer compila kernels (JIT), e uma etapa passa disso.
+        env.setdefault("SGLANG_OMNI_STARTUP_TIMEOUT", str(int(self.startup_timeout)))
         return env
 
     def ensure_build_tools(self, log: Log = print) -> None:
