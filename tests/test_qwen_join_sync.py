@@ -109,7 +109,11 @@ class JoinSyncTests(unittest.TestCase):
             with self.subTest(notebook=label), tempfile.TemporaryDirectory() as work:
                 ns, nb = namespace(label)
                 source = '\n'.join(''.join(c['source']) for c in nb['cells'])
-                self.assertIn('save_synth_wav(temp_synth_wav, audio_tensor,', source)
+                # A dublagem agora monta por partes (núcleo matraca, sync uniforme e sem cortar palavras);
+                # o fluxo de legendas SRT continua usando a sincronização por blocos deste notebook.
+                self.assertIn('matraca_dubbing.dub_language(', source)
+                self.assertIn('matraca_adapter_factory', source)
+                self.assertNotIn('save_synth_wav(temp_synth_wav, audio_tensor,', source)
                 self.assertIn('save_synth_wav(temp_sub_wav, sub_audio,', source)
                 audio = torch.ones(1, 24000) * .1
                 audio.qwen_chunk_lengths = [24000]

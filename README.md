@@ -12,7 +12,7 @@ O **Matraca Studio** transcreve, traduz, dubla e clona vozes a partir de áudio 
 | Notebook | GPU indicada | Modelos disponíveis | Quando usar |
 | :--- | :--- | :--- | :--- |
 | [Matraca_Studio_T4.ipynb](Matraca_Studio_T4.ipynb) | NVIDIA T4 | Qwen3-TTS 1.7B e OmniVoice | Versão mais leve para sessões T4 e fluxo padrão de dublagem. |
-| [Matraca_Studio_L4.ipynb](Matraca_Studio_L4.ipynb) | NVIDIA L4, 24 GB | **VoxCPM2 2B**, Qwen3-TTS 1.7B e OmniVoice | Versão recomendada para a maior qualidade, maior velocidade de inferência e todos os três modelos. |
+| [Matraca_Studio_L4.ipynb](Matraca_Studio_L4.ipynb) | NVIDIA L4, 24 GB | **VoxCPM2 2B**, Qwen3-TTS 1.7B, OmniVoice e Higgs TTS 3 4B (experimental) | Versão recomendada para a maior qualidade, maior velocidade de inferência e todos os modelos. |
 
 ### Por que usar a L4?
 
@@ -29,6 +29,7 @@ Na dublagem multilíngue, o VoxCPM2 usa orientação de sotaque nativo por idiom
 | **VoxCPM2 2B** | L4 | Padrão L4; 48 kHz, clonagem Hi-Fi, controle de estilo e 11 idiomas. |
 | **Qwen3-TTS 1.7B** | T4 e L4 | Alta expressividade e clonagem para 9 idiomas. |
 | **OmniVoice** | T4 e L4 | Alternativa leve, rápida e com suporte a Árabe. |
+| **Higgs TTS 3 4B** 🧪 | L4 | Experimental. Roda num servidor isolado (SGLang-Omni, Python 3.12) instalado só quando você o escolhe. **Licença não comercial**: veja abaixo. |
 
 O aplicativo mantém somente **um motor de TTS na GPU por vez**. Ao trocar o modelo, o anterior é removido da VRAM antes do próximo carregamento.
 
@@ -60,6 +61,8 @@ As regressões de código e junções podem ser executadas sem pesos de IA com `
 - Processamento sequencial por idioma, limpeza de cache de GPU e cancelamento seguro.
 - Histórico em `./outputs`, downloads individuais e `audios_dublados.zip`.
 - Gerenciador de jobs persistente para recuperar o estado da interface após atualizar a página.
+- **Dublagem por partes** com a mesma voz em todas as partes, revisão e correção parte a parte (veja abaixo).
+- **Masterização para YouTube** (-14 LUFS, pico verdadeiro seguro, 48 kHz / 24 bits) aplicada ao final.
 
 ## Idiomas
 
@@ -112,12 +115,73 @@ Abra diretamente a versão adequada à sua GPU:
 
 Para clonagem livre, abra a aba **Clonagem livre**, envie a referência de voz, escolha texto ou SRT e gere o áudio. Na L4, o VoxCPM2 utiliza a referência e sua transcrição para maximizar a fidelidade da voz.
 
+## Voz coerente, parte por parte
+
+Cada idioma é dublado em **partes** (≈600 caracteres, sentenças inteiras; 400 no Higgs). Os padrões já vêm ajustados para vídeos do YouTube e não aparecem na tela:
+
+| O que garante a mesma voz | Como |
+| :--- | :--- |
+| Mesma referência e mesmo prompt de voz | Criados uma vez por idioma e reaproveitados em todas as partes. |
+| Mesma semente (`42`) em todas as partes e motores | Fixada só durante a geração; o RNG externo é preservado. |
+| Detecção de parte destoante | Cada parte é medida (tom/F0, cor tonal, brilho, ritmo, volume e, no Qwen3-TTS, similaridade de voz) e comparada com a mediana das demais. Só vale com 3 ou mais partes. |
+| Correção por geração, não por filtro | A parte que destoa é refeita com outra semente (1 tentativa automática). **Não há equalização nem redução de ruído** sobre a voz. |
+| Volume igual entre as partes | Apenas ganho (limitado a ±6 dB e sem clipping). |
+| Pausa de 180 ms entre partes, ritmo uniforme | O ajuste de duração usa o mesmo fator em todas as partes (limite de 18%) e nunca corta palavras. |
+| Masterização final | `loudnorm` linear em duas passagens: -14 LUFS, pico verdadeiro ≤ -1,5 dBTP, WAV 48 kHz / 24 bits. |
+
+### Aba 🧩 Revisão por partes
+
+Depois da dublagem, abra a aba para **ouvir cada parte**, editar o texto, **regenerar** (nova variação), escolher entre os *takes* anteriores e **remontar o áudio final**. As sessões ficam em `./sessoes/<áudio>/<idioma>/` (um WAV por parte + `manifest.json`), então dá para remontar mesmo depois de reiniciar a página. Remontar não precisa do áudio original nem da GPU; só regenerar uma parte precisa do motor.
+
+### Limites conhecidos
+
+- A consistência por semente e o QC foram validados com motores sintéticos e testes automatizados. **A avaliação auditiva em GPU continua sendo necessária**, como no restante do projeto (`docs/qwen_seed_validation.md`).
+- Partes menores podem soar diferentes entre si em alguns idiomas; é por isso que o QC compara cada parte com as demais e a revisão existe. Para o Qwen3-TTS, trechos longos continuam sendo o perfil aprovado: aumente o tamanho das partes se notar trocas de timbre.
+- Com 1 ou 2 partes não há com o que comparar, então o QC relativo não é aplicado.
+
+## Higgs TTS 3 4B (experimental, L4)
+
+Modelo da [Boson AI](https://huggingface.co/bosonai/higgs-tts-3-4b) com clonagem zero-shot em 100+ idiomas. Não tem API Python local: o notebook instala o servidor SGLang-Omni num ambiente separado (`uv`, Python 3.12) **na primeira vez que você escolhe o modelo** e o encerra ao trocar de motor, para liberar a VRAM.
+
+- **Não testado em GPU L4.** A ficha do modelo só confirma A100 40 GB; a placa de 24 GB é "relatada, não verificada". Se faltar memória, o erro do servidor aparece no log e os outros motores continuam funcionando.
+- A API não documenta semente: o app tenta enviá-la e, se o servidor recusar, segue sem ela (a geração então não é reprodutível; o QC e a revisão continuam valendo).
+- Se o download exigir aceite de termos, defina `HF_TOKEN` no ambiente do Colab (`os.environ['HF_TOKEN'] = ...`) antes de iniciar. Nunca cole tokens em células salvas.
+- **Licença: [Boson Higgs TTS 3 Research and Non-Commercial](https://huggingface.co/bosonai/higgs-tts-3-4b/blob/main/LICENSE).** A *Creator Use Grant* permite monetizar vídeos em canais próprios **com atribuição**; o relatório final já traz o texto (`This audio was created with Boson AI's Higgs Audio — https://www.boson.ai/higgs-audio`). Hospedar como serviço/produto exige licença comercial, e só é permitido clonar vozes com consentimento.
+
+## Prévia local da interface (sem GPU)
+
+```bash
+pip install -r requirements-dev.txt
+python scripts/preview_ui.py                    # L4 em http://127.0.0.1:7860
+python scripts/preview_ui.py --notebook T4 --port 7861
+```
+
+Executa o código real dos Passos 3 e 4 do notebook, trocando só Whisper, tradutor e TTS por substitutos (voz sintética). Algumas partes saem "destoantes" de propósito para você ver o QC e a revisão (`--no-drift` desliga).
+
+## Testes
+
+```bash
+pip install -r requirements-dev.txt   # e o ffmpeg no PATH
+python -m pytest -q tests
+```
+
+Os testes rodam sem GPU e sem baixar modelos: DSP validado contra o `ebur128` do ffmpeg, sessões e QC com um motor que reproduz o defeito de timbre, montagem/sincronização/masterização, interface e o cliente do Higgs contra um servidor falso. O CI do GitHub roda a mesma suíte.
+
 ## Estrutura do projeto
 
 ```text
 ai-colab-matracastudio/
 ├── Matraca_Studio_T4.ipynb      # Notebook para GPU T4: Qwen3-TTS e OmniVoice
-├── Matraca_Studio_L4.ipynb      # Notebook para GPU L4: VoxCPM2, Qwen3-TTS e OmniVoice
+├── Matraca_Studio_L4.ipynb      # Notebook para GPU L4: VoxCPM2, Qwen3-TTS, OmniVoice e Higgs TTS 3
+├── matraca/                     # Núcleo compartilhado pelos dois notebooks (clonado no Passo 1)
+│   ├── dsp.py                   # Loudness BS.1770, medidas de voz, stretch, masterização
+│   ├── parts.py, qc.py          # Divisão em partes e controle de qualidade
+│   ├── session.py, timeline.py  # Sessão por partes (takes, regeneração), intro/outro e montagem
+│   ├── dubbing.py               # Orquestração independente do motor
+│   ├── engines/higgs.py         # Higgs TTS 3 (servidor isolado)
+│   └── ui/                      # Tema/CSS e aba Revisão por partes
+├── scripts/preview_ui.py        # Prévia local da interface sem GPU
+├── tests/                       # Testes automatizados
 ├── higgs_audio_v2_tokenizer.py  # Ponte de compatibilidade do OmniVoice
 ├── README.md                    # Esta documentação
 ├── LICENSE                      # Licença MIT

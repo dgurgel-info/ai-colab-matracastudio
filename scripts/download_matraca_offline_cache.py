@@ -49,6 +49,19 @@ REPO_FILES = (
     "Matraca_Studio_L4.ipynb",
     "Matraca_Studio_T4.ipynb",
     "higgs_audio_v2_tokenizer.py",
+    # Núcleo compartilhado (partes, QC, montagem, masterização e interface)
+    "matraca/__init__.py",
+    "matraca/dsp.py",
+    "matraca/parts.py",
+    "matraca/qc.py",
+    "matraca/session.py",
+    "matraca/timeline.py",
+    "matraca/dubbing.py",
+    "matraca/ui/__init__.py",
+    "matraca/ui/controller.py",
+    "matraca/ui/review_tab.py",
+    "matraca/ui/theme.py",
+    "matraca/ui/style.css",
 )
 REPO_RAW = "https://raw.githubusercontent.com/dgurgel-info/ai-colab-matracastudio/main/{}"
 
@@ -135,6 +148,7 @@ def download_repository_files(cache_dir: Path) -> None:
     repo_dir.mkdir(parents=True, exist_ok=True)
     for filename in REPO_FILES:
         target = repo_dir / filename
+        target.parent.mkdir(parents=True, exist_ok=True)
         print(f"⬇️ Baixando {filename}")
         urllib.request.urlretrieve(REPO_RAW.format(filename), target)
 

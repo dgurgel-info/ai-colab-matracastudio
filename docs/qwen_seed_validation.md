@@ -252,3 +252,34 @@ comprova naturalidade após sincronizar o arquivo completo, francês ou GPU L4.
 O ajuste experimental de 35% continua excluído. A sincronização existente
 conserva o limite de 18% e a duração final do original, com preenchimento
 remanescente por silêncio; ainda pode exigir revisão auditiva para vídeo.
+
+## v9: dublagem por partes e consistência entre motores (pendente de avaliação auditiva)
+
+A dublagem passou a gerar o roteiro em partes de ~600 caracteres (400 no Higgs), cada uma salva
+como WAV e registrada em `manifest.json`, para que seja possível ouvir, corrigir o texto, gerar
+outra variação e remontar sem refazer o restante. O perfil Qwen aprovado nas versões anteriores
+(prompt fixo, semente 42, `x_vector_only_mode` para inglês, `non_streaming_mode`, orçamento de
+tokens e recusa de saída truncada) não mudou; só ganhou parâmetros opcionais `voice_prompt` e
+`seed` com os mesmos padrões, e os 19 testes anteriores continuam passando.
+
+O que mudou para os outros motores: VoxCPM2 e OmniVoice passaram a usar semente fixa durante a
+geração (antes não tinham), o que remove uma fonte de variação de timbre entre blocos.
+
+Controle de qualidade: cada parte é medida (F0, cor tonal por bandas de 1/3 de oitava, brilho,
+ritmo, volume e, no Qwen3-TTS, o cosseno do encoder de locutor do próprio modelo) e comparada
+com a mediana das demais; só com 3 ou mais partes. A parte que destoa é refeita com outra
+semente. Nenhum filtro espectral, equalização ou redução de ruído é aplicado: a lição da tentativa
+revertida (`b2b3b69`) foi mantida. O único processamento sobre o áudio gerado é **ganho** para igualar
+o volume entre as partes (limitado a ±6 dB, sem clipping) e a masterização final do arquivo
+(`loudnorm` linear, -14 LUFS, pico verdadeiro -1,5 dBTP, 48 kHz / 24 bits).
+
+Verificado automaticamente: loudness conferido contra o `ebur128` do ffmpeg; um motor sintético que
+reproduz o defeito (uma parte com tom, brilho e volume diferentes na semente base) é detectado e
+corrigido; duração final exata; remontagem sem o áudio original e sem GPU; cliente do Higgs contra
+um servidor falso.
+
+**Não verificado:** nenhum áudio real foi gerado em GPU com esta versão. Os limiares de tolerância do
+QC são heurísticas conservadoras e precisam ser confrontados com a avaliação auditiva em dublagens
+completas (L4 e T4), em especial: partes de ~600 caracteres no Qwen3-TTS contra a narração contínua
+aprovada, e o Higgs TTS 3 em uma L4 de 24 GB (a ficha do modelo só confirma A100 40 GB).
+

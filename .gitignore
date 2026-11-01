@@ -31,3 +31,9 @@ ENV/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Sessões de dublagem por partes e clone do núcleo (geradas no Colab / na prévia local)
+sessoes/
+matraca_src/
+outputs/
+.pytest_cache/

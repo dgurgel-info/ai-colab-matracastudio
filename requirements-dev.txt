@@ -1,0 +1,10 @@
+# Testes e prévia local da interface (sem GPU). Os notebooks instalam o que precisam no Colab.
+numpy
+scipy
+soundfile
+requests
+gradio>=5
+imageio-ffmpeg
+pytest
+torch
+torchaudio
