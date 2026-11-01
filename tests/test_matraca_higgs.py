@@ -250,3 +250,13 @@ def test_installers_run_in_their_own_session_so_a_kernel_interrupt_does_not_kill
     HiggsServer(workdir=str(tmp_path / "srv"))._run(["true"], lambda m: None)
     if os.name != "nt":
         assert captured[0].get("start_new_session") is True
+
+
+def test_sglang_omni_startup_timeout_matches_ours_and_respects_an_override(monkeypatch, tmp_path):
+    monkeypatch.delenv("SGLANG_OMNI_STARTUP_TIMEOUT", raising=False)
+    s = HiggsServer(workdir=str(tmp_path / "srv"), startup_timeout=1800)
+    assert s.server_env()["SGLANG_OMNI_STARTUP_TIMEOUT"] == "1800"       # o padrão dele (600 s) é curto demais
+    assert HiggsServer(workdir=str(tmp_path / "srv")).startup_timeout == 2400
+    monkeypatch.setenv("SGLANG_OMNI_STARTUP_TIMEOUT", "5000")
+    assert s.server_env()["SGLANG_OMNI_STARTUP_TIMEOUT"] == "5000"       # quem definiu manda
+
