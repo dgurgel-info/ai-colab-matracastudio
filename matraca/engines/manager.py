@@ -19,14 +19,12 @@ from typing import Callable, Dict, Optional, Tuple
 Log = Callable[[str], None]
 Progress = Callable[..., None]
 
-VOXCPM2, QWEN3, OMNIVOICE, HIGGS = "VoxCPM2", "Qwen3-TTS", "OmniVoice", "Higgs TTS 3"
+QWEN3, OMNIVOICE, HIGGS = "Qwen3-TTS", "OmniVoice", "Higgs TTS 3"
 
 
 def engine_name(choice) -> str:
     """Nome canônico a partir do rótulo da interface (ou do nome já canônico)."""
     text = str(choice)
-    if "VoxCPM" in text:
-        return VOXCPM2
     if "Higgs" in text:
         return HIGGS
     if "Qwen" in text:
@@ -115,6 +113,6 @@ def make_higgs_loader(root: str) -> Callable[..., object]:
 def build_manager(root: str, free_memory: Optional[Callable[[], None]] = None, log: Log = print) -> EngineManager:
     """Gerenciador com os quatro motores, cada um no seu venv sob ``root``."""
     from matraca.engines.venv_engine import make_remote_loader
-    loaders = {name: make_remote_loader(name, root) for name in (VOXCPM2, QWEN3, OMNIVOICE)}
+    loaders = {name: make_remote_loader(name, root) for name in (QWEN3, OMNIVOICE)}
     loaders[HIGGS] = make_higgs_loader(root)
     return EngineManager(loaders, free_memory=free_memory, log=log)

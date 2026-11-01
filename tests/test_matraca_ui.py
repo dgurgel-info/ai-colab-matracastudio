@@ -79,8 +79,8 @@ def test_theme_css_and_header_render():
     for needed in ("#dub-button", "#parts-table", ".matraca-card", ".dark", ".mt-chip", "prefers-reduced-motion"):
         assert needed in css
     assert css.count("{") == css.count("}")
-    h = render_header("VoxCPM2", "NVIDIA L4 · 24 GB", "2.0.0")
-    assert "NVIDIA L4" in h and "VoxCPM2" in h
+    h = render_header("Qwen3-TTS", "NVIDIA L4 · 24 GB", "2.0.0")
+    assert "NVIDIA L4" in h and "Qwen3-TTS" in h
 
 
 def test_review_tab_builds_in_gradio(world):

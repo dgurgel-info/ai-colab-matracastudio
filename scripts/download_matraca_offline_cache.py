@@ -32,7 +32,6 @@ PIP_PACKAGES = (
     "webdataset",
     "soxr",
     "soundfile",
-    "voxcpm",
     "transformers==4.57.3",
     "azure-cognitiveservices-speech",
     "gradio",
@@ -41,7 +40,6 @@ PIP_PACKAGES = (
 )
 PIP_NO_DEPS_PACKAGES = ("qwen-tts", "omnivoice")
 MODEL_REPOS = (
-    "openbmb/VoxCPM2",
     "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
     "k2-fsa/OmniVoice",
 )

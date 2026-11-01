@@ -1,6 +1,6 @@
 """Um venv dedicado por motor de voz, com o modelo rodando num worker (processo) próprio.
 
-* Cada motor tem as próprias bibliotecas e versões (voxcpm, qwen-tts e omnivoice se contradizem em
+* Cada motor tem as próprias bibliotecas e versões (qwen-tts e omnivoice se contradizem em
   transformers/gradio): nada disso entra no ambiente do notebook.
 * Trocar de motor encerra o processo do anterior; o sistema operacional devolve toda a VRAM.
 * O venv fica no disco (``<raiz>/<motor>/.venv``) e é reaproveitado enquanto a VM do Colab existir; o cache
@@ -47,7 +47,6 @@ class EngineSpec:
 
 
 SPECS = {
-    "VoxCPM2": EngineSpec("voxcpm2", "VoxCPM2 2B", ("voxcpm",)),
     "Qwen3-TTS": EngineSpec("qwen3", "Qwen3-TTS 1.7B", ("qwen-tts",)),
     "OmniVoice": EngineSpec("omnivoice", "OmniVoice", ("omnivoice",)),
 }
@@ -241,15 +240,6 @@ class _Closeable:
         self.worker.stop()
 
 
-class VoxCPMProxy(_Closeable):
-    def __init__(self, worker: VenvWorker):
-        super().__init__(worker)
-        self.tts_model = SimpleNamespace(sample_rate=int(worker.attr("tts_model.sample_rate")))
-
-    def generate(self, **kwargs):
-        return self.worker.call("generate", **kwargs)
-
-
 class QwenProxy(_Closeable):
     def __init__(self, worker: VenvWorker):
         super().__init__(worker)
@@ -268,7 +258,7 @@ class OmniVoiceProxy(_Closeable):
         return self.worker.call("generate", **kwargs)
 
 
-PROXIES = {"VoxCPM2": VoxCPMProxy, "Qwen3-TTS": QwenProxy, "OmniVoice": OmniVoiceProxy}
+PROXIES = {"Qwen3-TTS": QwenProxy, "OmniVoice": OmniVoiceProxy}
 
 
 def make_remote_loader(name: str, root: str) -> Callable[..., Any]:

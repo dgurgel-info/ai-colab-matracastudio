@@ -1,7 +1,7 @@
 # 🎙️ Matraca Studio — Dublagem e Clonagem de Voz
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)
-![Modelos](https://img.shields.io/badge/Modelos-VoxCPM2%20%7C%20Qwen3--TTS%20%7C%20OmniVoice%20%7C%20Higgs%20TTS%203-brightgreen.svg)
+![Modelos](https://img.shields.io/badge/Modelos-Qwen3--TTS%20%7C%20OmniVoice%20%7C%20Higgs%20TTS%203-brightgreen.svg)
 [![Testes](https://github.com/dgurgel-info/ai-colab-matracastudio/actions/workflows/tests.yml/badge.svg)](https://github.com/dgurgel-info/ai-colab-matracastudio/actions/workflows/tests.yml)
 ![Interface](https://img.shields.io/badge/Interface-Gradio-orange.svg)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-yellow.svg)
@@ -17,13 +17,11 @@ O foco desta versão é **dublar vídeos para o YouTube com a mesma voz do come�
 | Notebook | GPU indicada | Modelos disponíveis | Quando usar |
 | :--- | :--- | :--- | :--- |
 | [Matraca_Studio_T4.ipynb](Matraca_Studio_T4.ipynb) | NVIDIA T4 | Qwen3-TTS 1.7B e OmniVoice | Versão mais leve para sessões T4 e fluxo padrão de dublagem. |
-| [Matraca_Studio_L4.ipynb](Matraca_Studio_L4.ipynb) | NVIDIA L4, 24 GB | **VoxCPM2 2B**, Qwen3-TTS 1.7B, OmniVoice e Higgs TTS 3 4B (experimental) | Versão recomendada para a maior qualidade, maior velocidade de inferência e todos os modelos. |
+| [Matraca_Studio_L4.ipynb](Matraca_Studio_L4.ipynb) | NVIDIA L4, 24 GB | Qwen3-TTS 1.7B, OmniVoice e Higgs TTS 3 4B (experimental) | Versão com todos os modelos, aproveitando os 24 GB de VRAM. |
 
 ### Por que usar a L4?
 
-A versão L4 tem o **VoxCPM2 2B** como motor padrão (iniciado quando selecionado), com saída nativa em **48 kHz**, clonagem Hi-Fi e suporte a 11 idiomas. A GPU L4 tem 24 GB de VRAM, oferecendo mais margem para o modelo de 2B, Whisper e processamento de áudio do que a T4. Isso permite síntese de maior qualidade e, na prática, geração mais rápida que a T4 para o mesmo trabalho.
-
-Na dublagem multilíngue, o VoxCPM2 usa orientação de sotaque nativo por idioma — por exemplo, *General American English* para inglês — para evitar sotaques estrangeiros inadequados. Para clonagem livre, o modo Hi-Fi combina áudio de referência e transcrição para preservar timbre, ritmo, emoção e prosódia.
+A versão L4 roda na GPU de 24 GB, o que dá margem para o Whisper, o modelo de voz e o processamento de áudio, e inclui o **Higgs TTS 3 4B** (experimental). O **Qwen3-TTS 1.7B** é o motor inicial, com clonagem de alta fidelidade para 9 idiomas.
 
 > A melhor qualidade depende de uma referência limpa de voz. Prefira uma fala isolada, sem música, de 5 a 15 segundos, e revise a transcrição quando usar clonagem Hi-Fi.
 
@@ -31,12 +29,11 @@ Na dublagem multilíngue, o VoxCPM2 usa orientação de sotaque nativo por idiom
 
 | Modelo | Disponível em | Destaques |
 | :--- | :--- | :--- |
-| **VoxCPM2 2B** | L4 | Padrão L4; 48 kHz, clonagem Hi-Fi, controle de estilo e 11 idiomas. |
-| **Qwen3-TTS 1.7B** | T4 e L4 | Alta expressividade e clonagem para 9 idiomas. |
+| **Qwen3-TTS 1.7B** | T4 e L4 | Motor inicial; alta expressividade e clonagem para 9 idiomas. |
 | **OmniVoice** | T4 e L4 | Alternativa leve, rápida e com suporte a Árabe. |
 | **Higgs TTS 3 4B** 🧪 | L4 | Experimental. Roda num servidor isolado (SGLang-Omni, Python 3.12) instalado só quando você o escolhe. **Licença não comercial**: veja abaixo. |
 
-O aplicativo mantém somente **um motor de TTS por vez**, e **cada motor roda no próprio ambiente (venv)**, criado com `uv` na primeira vez em que você o seleciona (VoxCPM2, Qwen3-TTS e OmniVoice têm dependências que se contradizem, então não dividem bibliotecas). Ao selecionar outro modelo na interface, o processo do anterior é encerrado, a VRAM volta inteira, e o novo é preparado e iniciado. Uma **barra de progresso fixa no topo** mostra cada etapa (descarregar, criar o ambiente, instalar, baixar e iniciar). O ambiente fica em `engines/` e é reaproveitado enquanto a sessão do Colab existir; a primeira seleção de cada modelo leva alguns minutos.
+O aplicativo mantém somente **um motor de TTS por vez**, e **cada motor roda no próprio ambiente (venv)**, criado com `uv` na primeira vez em que você o seleciona (Qwen3-TTS e OmniVoice têm dependências que se contradizem, então não dividem bibliotecas). Ao selecionar outro modelo na interface, o processo do anterior é encerrado, a VRAM volta inteira, e o novo é preparado e iniciado. Uma **barra de progresso fixa no topo** mostra cada etapa (descarregar, criar o ambiente, instalar, baixar e iniciar). O ambiente fica em `engines/` e é reaproveitado enquanto a sessão do Colab existir; a primeira seleção de cada modelo leva alguns minutos.
 
 ### Fidelidade e pronúncia com Qwen3-TTS
 
@@ -73,10 +70,9 @@ As regressões de código e junções podem ser executadas sem pesos de IA com `
 
 | Motor | Idiomas |
 | :--- | :--- |
-| **VoxCPM2 (L4)** | O modelo cobre 30 idiomas; a interface expõe 11: Português Brasileiro, Inglês, Espanhol, Francês, Alemão, Chinês Mandarim, Italiano, Japonês, Russo, Árabe e Hindi. |
 | **Qwen3-TTS** | Português Brasileiro, Inglês, Espanhol, Francês, Alemão, Chinês Mandarim, Italiano, Japonês e Russo. |
 | **OmniVoice** | Os nove idiomas do Qwen3-TTS, além de Árabe. |
-| **Higgs TTS 3 (L4, experimental)** | Os mesmos 11 idiomas do VoxCPM2 na interface; o modelo cobre 100+ idiomas. |
+| **Higgs TTS 3 (L4, experimental)** | 11 idiomas na interface (Português Brasileiro, Inglês, Espanhol, Francês, Alemão, Chinês Mandarim, Italiano, Japonês, Russo, Árabe e Hindi); o modelo cobre 100+ idiomas. |
 
 ## Como executar no Google Colab
 
@@ -110,8 +106,8 @@ Abra diretamente a versão adequada à sua GPU:
 1. [![Abrir Matraca Studio L4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_L4.ipynb)
 2. Em **Ambiente de execução → Alterar tipo de ambiente de execução**, selecione **L4 GPU**.
 3. Execute as células do **Passo 1** ao **Passo 4** em ordem. A primeira vez que você seleciona cada modelo, o notebook cria o venv dele e baixa os pesos, o que pode levar alguns minutos.
-4. Na interface, mantenha **VoxCPM2 2B** para a melhor qualidade ou selecione Qwen3-TTS/OmniVoice quando necessário. O **Higgs TTS 3** é experimental (veja a seção própria).
-5. Para geração máxima, mantenha os **30 passos de difusão** do VoxCPM2. Use o **Passo 5** para criar o ZIP final.
+4. Na interface, o **Qwen3-TTS** é o motor inicial; selecione OmniVoice quando precisar de um modelo mais leve. O **Higgs TTS 3** é experimental (veja a seção própria).
+5. Use o **Passo 5** para criar o ZIP final.
 
 ## Fluxo de uso
 
@@ -125,7 +121,7 @@ A aba **Dublagem sincronizada** tem cinco passos, um embaixo do outro:
 
 Se o relatório indicar partes fora do padrão, ou se você quiser mudar uma frase, abra a aba **🧩 Revisão por partes**.
 
-Para clonagem livre, abra a aba **Clonagem livre**, envie a referência de voz, escolha texto ou SRT e gere o áudio. Na L4, o VoxCPM2 utiliza a referência e sua transcrição para maximizar a fidelidade da voz.
+Para clonagem livre, abra a aba **Clonagem livre**, envie a referência de voz, escolha texto ou SRT e gere o áudio. Quanto mais limpa a referência e mais fiel a transcrição, melhor a fidelidade da voz.
 
 ## Voz coerente, parte por parte
 
@@ -184,7 +180,7 @@ Os testes rodam sem GPU e sem baixar modelos: DSP validado contra o `ebur128` do
 ```text
 ai-colab-matracastudio/
 ├── Matraca_Studio_T4.ipynb      # Notebook para GPU T4: Qwen3-TTS e OmniVoice
-├── Matraca_Studio_L4.ipynb      # Notebook para GPU L4: VoxCPM2, Qwen3-TTS, OmniVoice e Higgs TTS 3
+├── Matraca_Studio_L4.ipynb      # Notebook para GPU L4: Qwen3-TTS, OmniVoice e Higgs TTS 3
 ├── matraca/                     # Núcleo compartilhado pelos dois notebooks (clonado no Passo 1)
 │   ├── dsp.py                   # Loudness BS.1770, medidas de voz, stretch, masterização
 │   ├── parts.py, qc.py          # Divisão em partes e controle de qualidade

@@ -57,3 +57,19 @@ class OneEngineAtATimeNotebookTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class VoxCPM2RemovedTests(unittest.TestCase):
+    """O VoxCPM2 saiu do projeto: nenhum vestígio nos notebooks e Qwen3-TTS é o motor inicial."""
+
+    def test_no_trace_of_voxcpm2_in_the_notebooks(self):
+        for label in ('L4', 'T4'):
+            text = (ROOT / f'Matraca_Studio_{label}.ipynb').read_text(encoding='utf-8').lower()
+            self.assertNotIn('voxcpm', text, label)
+
+    def test_l4_offers_three_engines_with_qwen_as_default(self):
+        step4 = cells('L4')[4]
+        self.assertEqual(step4.count('🧪 Higgs TTS 3 4B'), 2)                  # dublagem e clonagem livre
+        self.assertEqual(step4.count('⚡ Qwen3-TTS 1.7B'), 4)                  # opção + valor inicial, nos dois seletores
+        self.assertEqual(step4.count("value='⚡ Qwen3-TTS 1.7B"), 2)
+        self.assertIn("MATRACA_ENGINE_LABEL = 'Qwen3-TTS · OmniVoice · Higgs TTS 3'", step4)

@@ -48,17 +48,6 @@ class FakeOmni:
         return [0.1 * torch.randn(24000)]
 
 
-class FakeVox:
-    tts_model = types.SimpleNamespace(sample_rate=48000)
-
-    def __init__(self):
-        self.kwargs = []
-
-    def generate(self, **kw):
-        self.kwargs.append(kw)
-        return (0.1 * torch.randn(48000)).numpy()
-
-
 class NotebookGlueTests(unittest.TestCase):
     def each(self):
         for label in ('T4', 'L4'):
@@ -103,25 +92,13 @@ class NotebookGlueTests(unittest.TestCase):
             self.assertFalse(torch.allclose(a, c))
             torch.testing.assert_close(d1, d2)
 
-    def test_voxcpm2_is_deterministic_per_seed_in_l4(self):
-        ns = engine_namespace('L4')
-        gen = ns['generate_voxcpm2_chunked']
-        args = dict(text='Hello there, this is a test.', ref_audio='r.wav', ref_text='', lang_code='en',
-                    inference_timesteps=10, preserve_reference_style=False)
-        a = gen(FakeVox(), seed=11, **args)
-        b = gen(FakeVox(), seed=11, **args)
-        c = gen(FakeVox(), seed=12, **args)
-        torch.testing.assert_close(a, b)
-        self.assertFalse(torch.allclose(a, c))
-
     def test_adapter_returns_synth_speaker_and_native_rate(self):
         for label, ns in self.each():
             qwen, omni = FakeQwen(), FakeOmni()
-            vox = FakeVox()
-            models = {'Qwen3-TTS': qwen, 'OmniVoice': omni, 'VoxCPM2': vox}
+            models = {'Qwen3-TTS': qwen, 'OmniVoice': omni}
 
             def load(choice):
-                name = 'VoxCPM2' if 'VoxCPM' in choice else ('Qwen3-TTS' if 'Qwen' in choice else 'OmniVoice')
+                name = 'Qwen3-TTS' if 'Qwen' in choice else 'OmniVoice'
                 return name, models[name]
             ns['load_tts_model'] = load
             base = {'lang_code': 'es', 'ref_path': 'ref.wav', 'ref_text': 'Fala.', 'num_steps': 4}
@@ -150,14 +127,6 @@ class NotebookGlueTests(unittest.TestCase):
             a, _ = synth('Texto.', 5)
             b, _ = synth('Texto.', 5)
             np.testing.assert_allclose(a, b)
-
-            if label == 'L4':
-                synth, speaker, rate = ns['matraca_adapter_factory'](dict(base, engine='VoxCPM2 2B', lang_code='en'))
-                self.assertEqual(rate, 48000)
-                self.assertIsNone(speaker)
-                audio, sr = synth('Hello world, this is a sample.', 9)
-                self.assertEqual((sr, audio.ndim), (48000, 1))
-                self.assertNotIn('prompt_wav_path', vox.kwargs[0])      # dublagem entre idiomas: referência isolada
 
     def test_qwen_prompt_helper_matches_stream_rules(self):
         for label, ns in self.each():

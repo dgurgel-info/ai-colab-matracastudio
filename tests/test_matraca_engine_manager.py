@@ -30,14 +30,13 @@ def make_manager(events, fail=None):
             return models[name]
         return _load
 
-    names = [mgr.VOXCPM2, mgr.QWEN3, mgr.OMNIVOICE, mgr.HIGGS]
+    names = [mgr.QWEN3, mgr.OMNIVOICE, mgr.HIGGS]
     manager = EngineManager({n: loader(n) for n in names}, free_memory=lambda: events.append("free"),
                             log=lambda m: None)
     return manager, models
 
 
 def test_engine_name_accepts_ui_labels_and_canonical_names():
-    assert engine_name("🏆 VoxCPM2 2B (OpenBMB - 48 kHz)") == mgr.VOXCPM2
     assert engine_name("⚡ Qwen3-TTS 1.7B (Alibaba)") == mgr.QWEN3
     assert engine_name("🧪 Higgs TTS 3 4B (Boson AI)") == mgr.HIGGS
     assert engine_name("🎙️ OmniVoice (k2-fsa)") == mgr.OMNIVOICE
@@ -47,10 +46,10 @@ def test_engine_name_accepts_ui_labels_and_canonical_names():
 def test_switch_unloads_previous_before_loading_next():
     events = []
     manager, models = make_manager(events)
-    manager.activate("VoxCPM2")
+    manager.activate("OmniVoice")
     manager.activate("Qwen3-TTS")
-    assert events == ["load:VoxCPM2", "free", "load:Qwen3-TTS"]      # o anterior sai ANTES de o novo entrar
-    assert models["VoxCPM2"].closed is True
+    assert events == ["load:OmniVoice", "free", "load:Qwen3-TTS"]      # o anterior sai ANTES de o novo entrar
+    assert models["OmniVoice"].closed is True
     assert manager.name == mgr.QWEN3 and manager.model is models["Qwen3-TTS"]
 
 
@@ -73,11 +72,11 @@ def test_only_the_selected_engine_is_ever_started():
 def test_failed_load_leaves_nothing_resident():
     events = []
     manager, models = make_manager(events, fail=mgr.QWEN3)
-    manager.activate("VoxCPM2")
+    manager.activate("OmniVoice")
     with pytest.raises(RuntimeError):
         manager.activate("Qwen3-TTS")
     assert manager.name is None and manager.model is None
-    assert models["VoxCPM2"].closed is True
+    assert models["OmniVoice"].closed is True
 
 
 def test_unload_closes_worker_and_is_safe_to_repeat():
@@ -105,21 +104,21 @@ def test_close_error_does_not_block_unload():
 def test_unknown_engine_is_rejected_without_touching_the_current_one():
     events = []
     manager, models = make_manager(events)
-    manager.activate("VoxCPM2")
-    manager.loaders.pop(mgr.OMNIVOICE)
+    manager.activate("OmniVoice")
+    manager.loaders.pop(mgr.QWEN3)
     with pytest.raises(KeyError):
-        manager.activate("OmniVoice")
-    assert manager.name == mgr.VOXCPM2 and models["VoxCPM2"].closed is False
+        manager.activate("Qwen3-TTS")
+    assert manager.name == mgr.OMNIVOICE and models["OmniVoice"].closed is False
 
 
 def test_progress_runs_forward_to_100_and_reports_the_unload():
     events, steps = [], []
     manager, _ = make_manager(events)
-    manager.activate("VoxCPM2", progress=lambda pct, label, until=None: steps.append((pct, label)))
+    manager.activate("OmniVoice", progress=lambda pct, label, until=None: steps.append((pct, label)))
     manager.activate("Qwen3-TTS", progress=lambda pct, label, until=None: steps.append((pct, label)))
     pcts = [p for p, _ in steps]
     assert steps[0][0] < 10 and pcts[-1] == 100
-    assert any("Descarregando VoxCPM2" in l for _, l in steps)       # a troca mostra o que sai
+    assert any("Descarregando OmniVoice" in l for _, l in steps)       # a troca mostra o que sai
     second = pcts[pcts.index(100) + 1:]
     assert second == sorted(second)                                  # nunca recua dentro de uma troca
 
@@ -127,11 +126,11 @@ def test_progress_runs_forward_to_100_and_reports_the_unload():
 def test_already_loaded_engine_reports_ready_immediately():
     events, steps = [], []
     manager, _ = make_manager(events)
-    manager.activate("VoxCPM2")
-    manager.activate("VoxCPM2", progress=lambda pct, label, until=None: steps.append(pct))
-    assert steps == [100] and events.count("load:VoxCPM2") == 1
+    manager.activate("OmniVoice")
+    manager.activate("OmniVoice", progress=lambda pct, label, until=None: steps.append(pct))
+    assert steps == [100] and events.count("load:OmniVoice") == 1
 
 
 def test_build_manager_registers_all_four_engines(tmp_path):
     m = mgr.build_manager(str(tmp_path))
-    assert set(m.loaders) == {mgr.VOXCPM2, mgr.QWEN3, mgr.OMNIVOICE, mgr.HIGGS}
+    assert set(m.loaders) == {mgr.QWEN3, mgr.OMNIVOICE, mgr.HIGGS}

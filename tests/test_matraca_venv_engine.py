@@ -11,7 +11,7 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from matraca.engines import rpc, venv_engine  # noqa: E402
 from matraca.engines.venv_engine import (  # noqa: E402
-    EngineSpec, EngineWorkerError, OmniVoiceProxy, QwenProxy, VenvWorker, VoxCPMProxy, free_port)
+    EngineSpec, EngineWorkerError, OmniVoiceProxy, QwenProxy, VenvWorker, free_port)
 
 FAKE = str(Path(__file__).resolve().parent / "fake_engine_worker.py")
 SPEC = EngineSpec("fake", "Motor falso", ("pacote-falso",))
@@ -55,15 +55,14 @@ def test_rpc_unserializable_objects_become_refs_only_on_the_worker_side():
 
 
 # ------------------------------------------------------------------ worker real (processo) com modelo falso
-def test_voxcpm_proxy_reads_sample_rate_and_returns_audio(worker):
-    proxy = VoxCPMProxy(worker)
-    assert proxy.tts_model.sample_rate == 48000
-    audio = proxy.generate(text="olá")
+def test_proxy_reads_remote_attributes_and_returns_audio(worker):
+    assert worker.attr("tts_model.sample_rate") == 48000                 # atributo lido no worker
+    audio = OmniVoiceProxy(worker).generate(text="olá")
     assert isinstance(audio, np.ndarray) and audio.shape == (8,)
 
 
 def test_seed_travels_to_the_worker_and_makes_generation_reproducible(worker):
-    proxy = VoxCPMProxy(worker)
+    proxy = OmniVoiceProxy(worker)
 
     def gen(seed):
         token = rpc.ACTIVE_SEED.set(seed)
@@ -90,7 +89,7 @@ def test_qwen_prompt_stays_remote_and_is_reused(worker):
 def test_worker_errors_reach_the_notebook_with_the_message(worker):
     with pytest.raises(EngineWorkerError, match="texto inválido"):
         OmniVoiceProxy(worker).generate(text="explode")
-    assert VoxCPMProxy(worker).generate(text="ok") is not None            # e o worker continua vivo
+    assert OmniVoiceProxy(worker).generate(text="ok") is not None            # e o worker continua vivo
 
 
 def test_stop_ends_the_process_and_later_calls_fail_clearly(worker):
@@ -105,8 +104,8 @@ def test_stop_ends_the_process_and_later_calls_fail_clearly(worker):
 
 def test_worker_that_dies_on_startup_reports_its_log(tmp_path):
     w = VenvWorker(SPEC, root=str(tmp_path), port=free_port(),
-                   command=[sys.executable, "-c", "print('ImportError: voxcpm quebrado'); raise SystemExit(3)"])
-    with pytest.raises(EngineWorkerError, match="voxcpm quebrado"):
+                   command=[sys.executable, "-c", "print('ImportError: modelo quebrado'); raise SystemExit(3)"])
+    with pytest.raises(EngineWorkerError, match="modelo quebrado"):
         w.start(log=lambda m: None)
 
 
@@ -166,7 +165,7 @@ def test_wrong_python_version_and_pip_failure_are_clear_errors(monkeypatch, tmp_
 
 def test_every_remote_engine_has_a_spec_a_proxy_and_a_worker_loader():
     from matraca.engines import worker as worker_module
-    assert set(venv_engine.SPECS) == set(venv_engine.PROXIES) == {"VoxCPM2", "Qwen3-TTS", "OmniVoice"}
+    assert set(venv_engine.SPECS) == set(venv_engine.PROXIES) == {"Qwen3-TTS", "OmniVoice"}
     for spec in venv_engine.SPECS.values():
         assert spec.key in worker_module.LOADERS and spec.packages
-    assert len({s.key for s in venv_engine.SPECS.values()}) == 3          # um venv por motor
+    assert len({s.key for s in venv_engine.SPECS.values()}) == 2          # um venv por motor
