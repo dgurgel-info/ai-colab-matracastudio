@@ -1,11 +1,16 @@
 # 🎙️ Matraca Studio — Dublagem e Clonagem de Voz
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)
-![Modelos](https://img.shields.io/badge/Modelos-VoxCPM2%20%7C%20Qwen3--TTS%20%7C%20OmniVoice-brightgreen.svg)
+![Modelos](https://img.shields.io/badge/Modelos-VoxCPM2%20%7C%20Qwen3--TTS%20%7C%20OmniVoice%20%7C%20Higgs%20TTS%203-brightgreen.svg)
+[![Testes](https://github.com/dgurgel-info/ai-colab-matracastudio/actions/workflows/tests.yml/badge.svg)](https://github.com/dgurgel-info/ai-colab-matracastudio/actions/workflows/tests.yml)
 ![Interface](https://img.shields.io/badge/Interface-Gradio-orange.svg)
 ![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-yellow.svg)
 
 O **Matraca Studio** transcreve, traduz, dubla e clona vozes a partir de áudio ou legendas SRT. A aplicação preserva a linha do tempo, permite revisar a transcrição antes da síntese e gera arquivos WAV individuais ou um pacote ZIP da sessão.
+
+O foco desta versão é **dublar vídeos para o YouTube com a mesma voz do começo ao fim**: o roteiro é gerado em partes que mantêm referência, prompt e semente, as partes que destoam são refeitas, e qualquer uma pode ser ouvida, corrigida e remontada depois sem refazer o resto. O áudio final sai masterizado (-14 LUFS, 48 kHz / 24 bits).
+
+**Sumário:** [Notebooks](#escolha-o-notebook-correto) · [Modelos](#modelos-de-voz) · [Funcionalidades](#funcionalidades) · [Executar no Colab](#como-executar-no-google-colab) · [Fluxo de uso](#fluxo-de-uso) · [Voz coerente, parte por parte](#voz-coerente-parte-por-parte) · [Higgs TTS 3](#higgs-tts-3-4b-experimental-l4) · [Prévia local](#prévia-local-da-interface-sem-gpu) · [Testes](#testes) · [Solução de problemas](#solução-de-problemas) · [Licença](#licença)
 
 ## Escolha o notebook correto
 
@@ -56,7 +61,7 @@ As regressões de código e junções podem ser executadas sem pesos de IA com `
 - Entrada por arquivo (`.wav`, `.mp3`, `.m4a`, `.ogg`, `.flac`) ou microfone.
 - Transcrição com Whisper e edição antes da dublagem.
 - Tradução robusta para múltiplos idiomas de destino.
-- Dublagem com sincronização de duração e preservação de introdução e encerramento.
+- Dublagem com sincronização de duração (ajuste uniforme de até 18%, sem cortar palavras) e preservação de introdução e encerramento.
 - Clonagem livre por texto ou por arquivo `.srt` com pausas e janelas temporais.
 - Processamento sequencial por idioma, limpeza de cache de GPU e cancelamento seguro.
 - Histórico em `./outputs`, downloads individuais e `audios_dublados.zip`.
@@ -68,9 +73,10 @@ As regressões de código e junções podem ser executadas sem pesos de IA com `
 
 | Motor | Idiomas |
 | :--- | :--- |
-| **VoxCPM2 (L4)** | 30 idiomas, incluindo Português Brasileiro, Inglês, Espanhol, Francês, Alemão, Árabe, Hindi, Japonês, Coreano, Russo, Tailandês, Turco e Vietnamita. |
+| **VoxCPM2 (L4)** | O modelo cobre 30 idiomas; a interface expõe 11: Português Brasileiro, Inglês, Espanhol, Francês, Alemão, Chinês Mandarim, Italiano, Japonês, Russo, Árabe e Hindi. |
 | **Qwen3-TTS** | Português Brasileiro, Inglês, Espanhol, Francês, Alemão, Chinês Mandarim, Italiano, Japonês e Russo. |
 | **OmniVoice** | Os nove idiomas do Qwen3-TTS, além de Árabe. |
+| **Higgs TTS 3 (L4, experimental)** | Os mesmos 11 idiomas do VoxCPM2 na interface; o modelo cobre 100+ idiomas. |
 
 ## Como executar no Google Colab
 
@@ -87,6 +93,8 @@ Para baixar manualmente as dependências, os pacotes APT, os pesos de todos os m
 O processo cria um `manifest.json` com hashes dos arquivos. Os pesos são mantidos no Drive apenas como cópia de segurança; para melhor desempenho, copie o modelo escolhido para `/content` antes de carregá-lo.
 O runtime-base do Colab (CUDA, driver NVIDIA, `torch` e `torchaudio`) continua sendo fornecido pela imagem da GPU; não é seguro reutilizar wheels desses componentes entre imagens/versões diferentes.
 
+> **Novo no Passo 1:** além de instalar as dependências, ele clona este repositório (`matraca/`) numa pasta local do Colab. A referência fica no campo `MATRACA_REF` (padrão `main`); para testar uma branch ou uma versão específica, troque o valor antes de executar. É preciso ter acesso ao GitHub durante a execução.
+
 Abra diretamente a versão adequada à sua GPU:
 
 ### Versão T4
@@ -94,7 +102,7 @@ Abra diretamente a versão adequada à sua GPU:
 1. [![Abrir Matraca Studio T4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_T4.ipynb)
 2. Em **Ambiente de execução → Alterar tipo de ambiente de execução**, selecione **T4 GPU**.
 3. Execute as células do **Passo 1** ao **Passo 4** em ordem.
-4. Abra o endereço `gradio.live` exibido ao final do Passo 4.
+4. Abra o endereço `gradio.live` exibido ao final do Passo 4 (veja o aviso de segurança abaixo).
 5. Execute o **Passo 5** quando quiser baixar todos os WAVs em um único ZIP.
 
 ### Versão L4 — recomendada
@@ -102,16 +110,20 @@ Abra diretamente a versão adequada à sua GPU:
 1. [![Abrir Matraca Studio L4 no Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/dgurgel-info/ai-colab-matracastudio/blob/main/Matraca_Studio_L4.ipynb)
 2. Em **Ambiente de execução → Alterar tipo de ambiente de execução**, selecione **L4 GPU**.
 3. Execute as células do **Passo 1** ao **Passo 4** em ordem. A primeira carga baixa os pesos do VoxCPM2 e pode levar alguns minutos.
-4. Na interface, mantenha **VoxCPM2 2B** para a melhor qualidade ou selecione Qwen3-TTS/OmniVoice quando necessário.
+4. Na interface, mantenha **VoxCPM2 2B** para a melhor qualidade ou selecione Qwen3-TTS/OmniVoice quando necessário. O **Higgs TTS 3** é experimental (veja a seção própria).
 5. Para geração máxima, mantenha os **30 passos de difusão** do VoxCPM2. Use o **Passo 5** para criar o ZIP final.
 
 ## Fluxo de uso
 
-1. Envie ou grave o áudio e escolha o idioma original.
-2. Clique em **Transcrever e analisar**, revise nomes e pontuação quando necessário.
-3. Escolha o modelo, os idiomas de destino e a opção de sincronização.
-4. Clique em **Dublar e sincronizar** e acompanhe o log em tempo real.
-5. Baixe os WAVs na aba de resultados ou gere o pacote ZIP.
+A aba **Dublagem sincronizada** tem cinco passos, um embaixo do outro:
+
+1. **Áudio de entrada:** envie ou grave o áudio e escolha o idioma original.
+2. **Transcrição:** clique em *Transcrever e analisar* e revise nomes e pontuação quando necessário.
+3. **Configuração:** escolha o modelo, os idiomas de destino e a opção de sincronização.
+4. **Terminal e monitor:** clique em *Dublar e sincronizar* e acompanhe o log por parte (inclusive quando uma parte é refeita por destoar das demais).
+5. **Resultados:** baixe os WAVs ou gere o pacote ZIP.
+
+Se o relatório indicar partes fora do padrão, ou se você quiser mudar uma frase, abra a aba **🧩 Revisão por partes**.
 
 Para clonagem livre, abra a aba **Clonagem livre**, envie a referência de voz, escolha texto ou SRT e gere o áudio. Na L4, o VoxCPM2 utiliza a referência e sua transcrição para maximizar a fidelidade da voz.
 
@@ -187,6 +199,20 @@ ai-colab-matracastudio/
 ├── LICENSE                      # Licença MIT
 └── .gitignore
 ```
+
+## Aviso de segurança
+
+O Passo 4 abre a interface com um link público `gradio.live` **sem senha**. Quem tiver o link consegue usar a GPU da sua sessão, enviar áudios e baixar resultados. Não compartilhe o link e encerre a sessão do Colab quando terminar. Chaves do Azure digitadas na interface ficam só na sessão e não são gravadas. Nunca cole tokens (GitHub, Hugging Face) em células salvas ou em notebooks compartilhados.
+
+## Solução de problemas
+
+| Sintoma | O que fazer |
+| :--- | :--- |
+| *"A fala gerada é longa demais para os X s do original sem cortar palavras"* | A tradução ficou mais longa que o áudio original (limite de 18% de aceleração). As partes já geradas ficam salvas: na aba 🧩 desmarque *Ajustar ao tempo do original* e remonte, ou encurte o texto das partes e regenere. |
+| Uma parte soa diferente das outras | Abra a aba 🧩, ouça a parte, use **Regenerar (nova variação)** ou escolha outro *take*, e **Remontar o áudio final**. Com o Qwen3-TTS, partes maiores tendem a manter melhor o timbre. |
+| *"Não foi possível baixar o núcleo do Matraca"* no Passo 1 | O Colab precisa acessar o GitHub. Confira a internet e o valor de `MATRACA_REF` (branch, tag ou commit existente). |
+| Higgs TTS 3 não inicia | O log mostra o final do `server.log` do servidor. Causas prováveis: falta de VRAM na L4, download dos pesos exigindo aceite de termos (defina `HF_TOKEN` no ambiente) ou a instalação isolada ter falhado. Os outros motores continuam funcionando. |
+| Quero reabrir uma dublagem depois de reiniciar a página | As sessões ficam em `./sessoes/`. Abra a aba 🧩 e escolha a sessão. Se o runtime do Colab foi reiniciado, a pasta é perdida: copie `sessoes/` e `outputs/` para o Drive antes de encerrar. |
 
 ## Licença
 
